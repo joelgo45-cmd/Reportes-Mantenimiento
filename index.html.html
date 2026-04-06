@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Centro de Reportes · Envases Universales</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&family=Lexend:wght@300;400;500;600;700;800&family=Lexend+Mega:wght@700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════
+   RESET Y VARIABLES GLOBALES
+═══════════════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{min-height:100vh;overscroll-behavior:none;}
+
+/* ═══════════════════════════════════════════════════════
+   PANTALLA INICIAL (LAUNCHER)
+═══════════════════════════════════════════════════════ */
+#launcher{
+  display:flex;flex-direction:column;min-height:100vh;
+  background:#08080f;
+  font-family:'DM Sans',sans-serif;
+}
+.launcher-header{
+  padding:32px 20px 24px;
+  text-align:center;
+  background:linear-gradient(180deg,#0d0d1c 0%,#08080f 100%);
+  border-bottom:1px solid #1c1c2e;
+}
+.launcher-logo{
+  width:52px;height:52px;margin:0 auto 14px;
+  background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.22);
+  border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;
+}
+.launcher-title{
+  font-family:'DM Sans',sans-serif;font-size:1.15rem;font-weight:700;
+  color:#f0f0f5;letter-spacing:-.01em;margin-bottom:4px;
+}
+.launcher-sub{
+  font-size:.72rem;color:#6b7280;letter-spacing:.08em;text-transform:uppercase;
+}
+.launcher-cards{
+  flex:1;padding:24px 16px 40px;
+  display:flex;flex-direction:column;gap:14px;
+  max-width:520px;margin:0 auto;width:100%;
+}
+.launcher-card{
+  background:#0f0f1a;border:1px solid #1c1c2e;border-radius:16px;
+  padding:20px;cursor:pointer;
+  display:flex;align-items:center;gap:16px;
+  transition:border-color .18s,background .18s,transform .15s;
+  user-select:none;
+}
+.launcher-card:active{transform:scale(.98);}
+.launcher-card.c-orange:hover{border-color:rgba(249,115,22,.4);background:rgba(249,115,22,.04);}
+.launcher-card.c-amber:hover{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.04);}
+.launcher-card.c-teal:hover{border-color:rgba(14,165,160,.4);background:rgba(14,165,160,.04);}
+
+.card-icon{
+  width:50px;height:50px;border-radius:12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:1.5rem;
+}
+.c-orange .card-icon{background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2);}
+.c-amber .card-icon{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);}
+.c-teal .card-icon{background:rgba(14,165,160,.1);border:1px solid rgba(14,165,160,.2);}
+
+.card-body{flex:1;}
+.card-title{font-size:.95rem;font-weight:700;color:#f0f0f5;margin-bottom:3px;}
+.c-orange .card-title{color:#f97316;}
+.c-amber .card-title{color:#f59e0b;}
+.c-teal .card-title{color:#0ea5a0;}
+.card-desc{font-size:.73rem;color:#6b7280;line-height:1.4;}
+.card-arrow{font-size:1.1rem;color:#374151;flex-shrink:0;}
+
+.launcher-version{
+  text-align:center;padding:0 16px 28px;
+  font-size:.65rem;color:#374151;letter-spacing:.06em;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CONTENEDOR DE MÓDULOS
+═══════════════════════════════════════════════════════ */
+#modules{display:none;}
+.module{display:none;}
+.module.active{display:block;}
+
+/* ─── BARRA VOLVER ─── */
+.back-bar{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;
+  background:#08080f;border-bottom:1px solid #1c1c2e;
+  position:sticky;top:0;z-index:500;
+}
+.back-btn{
+  display:flex;align-items:center;gap:6px;
+  background:none;border:none;color:#6b7280;
+  font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;
+  cursor:pointer;padding:6px 10px;border-radius:8px;
+  transition:color .15s,background .15s;
+}
+.back-btn:hover{color:#f0f0f5;background:#1c1c2e;}
+.back-label{font-size:.75rem;color:#374151;font-family:'DM Mono',monospace;margin-left:auto;}
+
+/* ═══════════════════════════════════════════════════════
+   ── MÓDULO A: REPORTE DE FALLA (CORRECTIVO) ──
+═══════════════════════════════════════════════════════ */
+#mod-correctivo{background:#08080f;color:#f0f0f5;font-family:'DM Sans',sans-serif;}
+#mod-correctivo .nav{display:flex;background:#0f0f1a;border-bottom:1px solid #1c1c2e;position:sticky;top:41px;z-index:400;}
+#mod-correctivo .nb{flex:1;padding:11px 4px;background:none;border:none;color:#6b7280;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;}
+#mod-correctivo .nb.act{color:#f97316;border-bottom-color:#f97316;}
+#mod-correctivo .panel{display:none;}#mod-correctivo .panel.act{display:block;}
+#mod-correctivo .hdr{padding:16px;border-bottom:1px solid #1c1c2e;background:linear-gradient(180deg,#0d0d1c 0%,#08080f 100%);display:flex;align-items:center;gap:12px;}
+#mod-correctivo .hdr-ic{width:42px;height:42px;border-radius:11px;flex-shrink:0;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.22);display:flex;align-items:center;justify-content:center;font-size:1.25rem;}
+#mod-correctivo .hdr h1{font-size:1rem;font-weight:700;letter-spacing:-.01em;}
+#mod-correctivo .hdr p{font-size:.65rem;color:#6b7280;margin-top:1px;}
+#mod-correctivo .folio-badge{margin-left:auto;flex-shrink:0;font-family:'DM Mono',monospace;font-size:.8rem;font-weight:500;color:#f97316;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.18);border-radius:7px;padding:5px 10px;}
+#mod-correctivo .wrap{max-width:560px;margin:0 auto;padding:16px 13px 90px;}
+#mod-correctivo .sec{background:#0f0f1a;border:1px solid #1c1c2e;border-radius:14px;margin-bottom:10px;overflow:hidden;}
+#mod-correctivo .sec-hd{display:flex;align-items:center;gap:10px;padding:13px 14px 10px;border-bottom:1px solid #1c1c2e;}
+#mod-correctivo .sec-hd .ico{font-size:1.1rem;}
+#mod-correctivo .sec-hd .tit{font-size:.8rem;font-weight:700;color:#f0f0f5;letter-spacing:-.01em;}
+#mod-correctivo .sec-hd .sub{font-size:.65rem;color:#6b7280;margin-top:1px;}
+#mod-correctivo .sec-hd .done-mark{margin-left:auto;font-size:.85rem;color:#22c55e;opacity:0;transition:opacity .2s;}
+#mod-correctivo .sec.done .done-mark{opacity:1;}
+#mod-correctivo .sec.done{border-color:rgba(34,197,94,.25);}
+#mod-correctivo .sec-body{padding:13px 14px 14px;display:flex;flex-direction:column;gap:10px;}
+#mod-correctivo .lbl{font-size:.68rem;font-weight:600;color:#9ca3af;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;display:block;}
+#mod-correctivo .q{font-size:.84rem;font-weight:600;color:#f0f0f5;margin-bottom:5px;}
+#mod-correctivo .hint{font-size:.7rem;color:#6b7280;margin-top:-3px;margin-bottom:5px;line-height:1.4;}
+#mod-correctivo input[type=text],#mod-correctivo input[type=number],#mod-correctivo select,#mod-correctivo textarea{width:100%;background:#111120;border:1.5px solid #1e1e30;border-radius:9px;color:#f0f0f5;font-family:'DM Sans',sans-serif;font-size:.87rem;padding:9px 11px;outline:none;appearance:none;transition:border-color .15s;}
+#mod-correctivo input:focus,#mod-correctivo select:focus,#mod-correctivo textarea:focus{border-color:#f97316;}
+#mod-correctivo select option{background:#111120;}
+#mod-correctivo textarea{resize:vertical;line-height:1.5;}
+#mod-correctivo input[type=time]{width:100%;background:#111120;border:1.5px solid #1e1e30;border-radius:9px;color:#f0f0f5;font-family:'DM Mono',monospace;font-size:1.05rem;font-weight:500;padding:9px 11px;outline:none;-webkit-appearance:none;transition:border-color .15s;}
+#mod-correctivo input[type=time]:focus{border-color:#f97316;}
+#mod-correctivo input[type=date]{width:100%;background:#111120;border:1.5px solid #1e1e30;border-radius:9px;color:#f0f0f5;font-family:'DM Sans',sans-serif;font-size:.87rem;padding:9px 11px;outline:none;appearance:none;}
+#mod-correctivo .g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+#mod-correctivo .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;}
+#mod-correctivo .chips{display:flex;flex-wrap:wrap;gap:7px;}
+#mod-correctivo .chip{background:#111120;border:1.5px solid #1e1e30;border-radius:8px;padding:7px 12px;font-size:.82rem;font-weight:500;color:#9ca3af;cursor:pointer;transition:all .14s;user-select:none;}
+#mod-correctivo .chip:active{transform:scale(.97);}
+#mod-correctivo .chip.sel{background:rgba(249,115,22,.1);border-color:#f97316;color:#f97316;font-weight:600;}
+#mod-correctivo .chip.sel-blue{background:rgba(59,130,246,.1);border-color:#3b82f6;color:#3b82f6;font-weight:600;}
+#mod-correctivo .chip.sel-red{background:rgba(239,68,68,.1);border-color:#ef4444;color:#ef4444;font-weight:600;}
+#mod-correctivo .chip.sel-amber{background:rgba(245,158,11,.1);border-color:#f59e0b;color:#f59e0b;font-weight:600;}
+#mod-correctivo .chip.sel-green{background:rgba(34,197,94,.1);border-color:#22c55e;color:#22c55e;font-weight:600;}
+#mod-correctivo .chip.sel-purple{background:rgba(167,139,250,.1);border-color:#a78bfa;color:#a78bfa;font-weight:600;}
+#mod-correctivo .sub-chips{display:none;padding-top:7px;}
+#mod-correctivo .sub-chips.on{display:flex;flex-wrap:wrap;gap:6px;animation:rfFd .2s ease;}
+#mod-correctivo .prior-chips .chip[data-p="URGENTE"]{color:#fca5a5;}
+#mod-correctivo .prior-chips .chip[data-p="ALTA"]{color:#fdba74;}
+#mod-correctivo .prior-chips .chip[data-p="MEDIA"]{color:#fde68a;}
+#mod-correctivo .prior-chips .chip[data-p="BAJA"]{color:#86efac;}
+#mod-correctivo .kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+#mod-correctivo .kpi-card{background:#13131f;border:1px solid #26263a;border-radius:10px;padding:10px 12px;text-align:center;}
+#mod-correctivo .kpi-v{font-family:'DM Mono',monospace;font-size:1.3rem;font-weight:500;line-height:1;}
+#mod-correctivo .kpi-u{font-size:.6rem;color:#6b7280;margin-top:1px;}
+#mod-correctivo .kpi-l{font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;margin-top:5px;}
+#mod-correctivo .kpi-card.mttr .kpi-v{color:#ef4444;}
+#mod-correctivo .kpi-card.down .kpi-v{color:#f59e0b;}
+#mod-correctivo .mtbf-info{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.15);border-radius:9px;padding:10px 12px;}
+#mod-correctivo .mtbf-info .v{font-family:'DM Mono',monospace;font-size:1.2rem;font-weight:500;color:#22c55e;}
+#mod-correctivo .mtbf-info .l{font-size:.65rem;color:#6b7280;margin-top:2px;}
+#mod-correctivo .estado-chips .chip{padding:9px 14px;}
+#mod-correctivo .btn-gen{width:100%;padding:15px;border:none;border-radius:12px;background:#f97316;color:#fff;font-family:'DM Sans',sans-serif;font-size:.96rem;font-weight:700;cursor:pointer;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 22px rgba(249,115,22,.28);transition:all .15s;}
+#mod-correctivo .btn-gen:hover{background:#ea580c;transform:translateY(-1px);}
+#mod-correctivo .btn-gen:active{transform:scale(.98);}
+#mod-correctivo .result{display:none;margin-top:12px;}
+#mod-correctivo .result.on{display:flex;flex-direction:column;gap:10px;animation:rfFd .3s ease;}
+@keyframes rfFd{from{opacity:0;transform:translateY(-5px);}to{opacity:1;transform:none;}}
+#mod-correctivo .msg-box{background:#0f0f1a;border:1px solid #1c1c2e;border-radius:14px;overflow:hidden;}
+#mod-correctivo .msg-hd{background:#0d1a10;border-bottom:1px solid #1a2e1a;padding:8px 13px;font-size:.64rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#4ade80;display:flex;align-items:center;gap:6px;}
+#mod-correctivo .msg-pre{white-space:pre-wrap;word-break:break-word;font-family:'DM Mono',monospace;font-size:.76rem;line-height:1.65;color:#f0f0f5;padding:13px 14px;}
+#mod-correctivo .btn-copy{width:100%;padding:14px;border:2px solid rgba(34,197,94,.3);border-radius:12px;background:rgba(34,197,94,.07);color:#4ade80;font-family:'DM Sans',sans-serif;font-size:.94rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;}
+#mod-correctivo .btn-copy.done{background:rgba(34,197,94,.18);border-color:#4ade80;pointer-events:none;}
+#mod-correctivo .confirm-box{display:none;background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.18);border-radius:12px;padding:13px 15px;text-align:center;}
+#mod-correctivo .confirm-box.on{display:block;animation:rfFd .25s ease;}
+#mod-correctivo .confirm-box b{display:block;font-size:.94rem;color:#4ade80;margin-bottom:3px;}
+#mod-correctivo .confirm-box span{font-size:.73rem;color:#6b7280;}
+#mod-correctivo .post-btns{display:none;flex-direction:column;gap:8px;}
+#mod-correctivo .post-btns.on{display:flex;animation:rfFd .3s ease;}
+#mod-correctivo .btn-save{width:100%;padding:14px;border:none;border-radius:11px;background:#f97316;color:#fff;font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(249,115,22,.22);transition:all .15s;}
+#mod-correctivo .btn-save:hover{background:#ea580c;}
+#mod-correctivo .btn-disc{width:100%;padding:11px;border:1px solid #1c1c2e;border-radius:11px;background:transparent;color:#6b7280;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s;}
+#mod-correctivo .hist-wrap{padding:13px;max-width:560px;margin:0 auto;}
+#mod-correctivo .hkpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px;}
+#mod-correctivo .hkpi{background:#0f0f1a;border:1px solid #1c1c2e;border-radius:10px;padding:9px 10px;text-align:center;}
+#mod-correctivo .hkpi .v{font-family:'DM Mono',monospace;font-size:1.15rem;font-weight:500;}
+#mod-correctivo .hkpi .l{font-size:.58rem;color:#6b7280;text-transform:uppercase;letter-spacing:.07em;margin-top:2px;}
+#mod-correctivo .hkpi.mttr .v{color:#ef4444;}
+#mod-correctivo .hkpi.mtbf .v{color:#22c55e;}
+#mod-correctivo .hkpi.down .v{color:#f59e0b;}
+#mod-correctivo .hkpi.tot  .v{color:#f97316;}
+#mod-correctivo .hbar{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+#mod-correctivo .bxl{background:#0f0f1a;color:#f0f0f5;border:1px solid #1c1c2e;border-radius:7px;padding:7px 13px;font-size:.76rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+#mod-correctivo .bxl:hover{border-color:#f97316;color:#f97316;}
+#mod-correctivo .bdel{background:rgba(239,68,68,.07);color:#ef4444;border:1px solid rgba(239,68,68,.18);border-radius:7px;padding:7px 13px;font-size:.76rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+#mod-correctivo .nreg{margin-left:auto;font-size:.7rem;color:#6b7280;font-family:'DM Mono',monospace;}
+#mod-correctivo .tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid #1c1c2e;}
+#mod-correctivo table{border-collapse:collapse;width:100%;min-width:640px;background:#0f0f1a;}
+#mod-correctivo th{padding:8px 9px;font-size:.61rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #1c1c2e;white-space:nowrap;}
+#mod-correctivo td{padding:7px 9px;font-size:.74rem;vertical-align:top;border-bottom:1px solid #1c1c2e;}
+#mod-correctivo tr:last-child td{border-bottom:none;}
+#mod-correctivo tr:hover td{background:rgba(255,255,255,.02);}
+#mod-correctivo td.folio{font-family:'DM Mono',monospace;font-size:.86rem;font-weight:500;color:#f97316;}
+#mod-correctivo .xbtn{background:none;border:none;color:#6b7280;cursor:pointer;padding:2px 5px;border-radius:3px;}
+#mod-correctivo .xbtn:hover{color:#ef4444;}
+#mod-correctivo .empty{text-align:center;padding:38px 16px;color:#6b7280;}
+#mod-correctivo .empty .ei{font-size:2rem;margin-bottom:7px;}
+#mod-correctivo .rf-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:#14141f;border:1px solid #26263a;color:#f0f0f5;padding:10px 20px;border-radius:24px;font-size:.8rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.7);transition:transform .28s cubic-bezier(.175,.885,.32,1.275);z-index:9999;white-space:normal;max-width:86vw;text-align:center;line-height:1.4;}
+#mod-correctivo .rf-toast.on{transform:translateX(-50%) translateY(0);}
+@media(max-width:420px){#mod-correctivo .g2,#mod-correctivo .g3{grid-template-columns:1fr;}#mod-correctivo .kpi-row{grid-template-columns:1fr 1fr;}#mod-correctivo .hkpi-row{grid-template-columns:1fr 1fr;}}
+
+/* ═══════════════════════════════════════════════════════
+   ── MÓDULO B: REPORTE DE PARO ──
+═══════════════════════════════════════════════════════ */
+#mod-paro{background:#09090b;color:#f4f4f5;font-family:'Barlow',sans-serif;}
+#mod-paro .nav{display:flex;background:#111113;border-bottom:1px solid #2e2e35;position:sticky;top:41px;z-index:300;}
+#mod-paro .nav-btn{flex:1;padding:13px 6px;background:none;border:none;color:#71717a;font-family:'Barlow Condensed',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;}
+#mod-paro .nav-btn.active{color:#f59e0b;border-bottom-color:#f59e0b;}
+#mod-paro .panel{display:none;}#mod-paro .panel.active{display:block;}
+#mod-paro .hdr{background:linear-gradient(135deg,#1c1408,#2d1f05,#1c1408);border-bottom:2px solid #d97706;padding:16px;display:flex;align-items:center;gap:12px;}
+#mod-paro .hdr-icon{font-size:2rem;}
+#mod-paro .hdr h1{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;color:#f59e0b;letter-spacing:.04em;text-transform:uppercase;}
+#mod-paro .hdr p{font-size:.68rem;color:rgba(245,158,11,.6);letter-spacing:.1em;text-transform:uppercase;margin-top:1px;}
+#mod-paro .hdr-badge{margin-left:auto;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:6px 12px;text-align:center;flex-shrink:0;}
+#mod-paro .hdr-badge .n{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:800;color:#f59e0b;line-height:1;}
+#mod-paro .hdr-badge .l{font-size:.58rem;color:rgba(245,158,11,.6);letter-spacing:.1em;text-transform:uppercase;}
+#mod-paro .fw{max-width:660px;margin:0 auto;padding:16px 14px 70px;}
+#mod-paro .sec{background:#111113;border:1px solid #2e2e35;border-radius:10px;padding:16px;margin-bottom:14px;}
+#mod-paro .sec-hd{font-family:'Barlow Condensed',sans-serif;font-size:.76rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#f59e0b;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+#mod-paro .sec-hd::after{content:'';flex:1;height:1px;background:#2e2e35;}
+#mod-paro label{display:block;font-size:.73rem;color:#a1a1aa;margin-bottom:4px;margin-top:11px;font-weight:500;}
+#mod-paro label:first-of-type{margin-top:0;}
+#mod-paro input[type=text],#mod-paro input[type=time],#mod-paro input[type=date],#mod-paro select,#mod-paro textarea{width:100%;background:#18181b;border:1px solid #2e2e35;border-radius:8px;color:#f4f4f5;font-family:'Barlow',sans-serif;font-size:.9rem;padding:10px 12px;outline:none;appearance:none;transition:border-color .15s,box-shadow .15s;}
+#mod-paro input:focus,#mod-paro select:focus,#mod-paro textarea:focus{border-color:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.12);}
+#mod-paro textarea{resize:vertical;min-height:72px;line-height:1.5;}
+#mod-paro select option{background:#18181b;}
+#mod-paro .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+#mod-paro .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+#mod-paro .tmuerto{background:#1f1f23;border:1px solid #3a3a44;border-radius:8px;padding:10px 13px;font-family:'Barlow',sans-serif;font-size:1rem;font-weight:600;color:#22c55e;min-height:42px;display:flex;align-items:center;}
+#mod-paro .tmuerto.warn{color:#ef4444;}
+#mod-paro .acc-list{display:flex;flex-direction:column;gap:10px;}
+#mod-paro .acc-item{background:#18181b;border:1px solid #2e2e35;border-radius:9px;padding:11px 12px;display:grid;grid-template-columns:1fr auto;gap:8px;animation:pSli .2s ease;}
+@keyframes pSli{from{opacity:0;transform:translateY(-5px);}to{opacity:1;transform:none;}}
+#mod-paro .acc-item .af{display:flex;flex-direction:column;gap:7px;flex:1;}
+#mod-paro .acc-num{font-family:'Barlow Condensed',sans-serif;font-size:.82rem;font-weight:700;color:#f59e0b;letter-spacing:.08em;margin-bottom:2px;}
+#mod-paro .acc-item textarea{background:#1f1f23;border-color:transparent;padding:7px 8px;font-size:.84rem;min-height:52px;}
+#mod-paro .acc-item textarea:focus{border-color:#f59e0b;background:#18181b;}
+#mod-paro .acc-sub{display:flex;gap:8px;}
+#mod-paro .acc-sub input{font-size:.82rem;padding:7px 9px;}
+#mod-paro .btn-rm{background:none;border:none;color:#71717a;font-size:1.1rem;cursor:pointer;padding:3px 6px;border-radius:5px;transition:color .15s;align-self:flex-start;}
+#mod-paro .btn-rm:hover{color:#ef4444;}
+#mod-paro .pz{border:2px dashed #3a3a44;border-radius:9px;padding:14px;text-align:center;cursor:pointer;position:relative;transition:border-color .15s,background .15s;}
+#mod-paro .pz:hover{border-color:#f59e0b;background:rgba(245,158,11,.04);}
+#mod-paro .pz input[type=file]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;}
+#mod-paro .pz .pi{font-size:1.5rem;margin-bottom:4px;}
+#mod-paro .pz .pl{font-size:.72rem;color:#71717a;}
+#mod-paro .pz .pl b{color:#f59e0b;}
+#mod-paro .pp{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
+#mod-paro .pp img{width:78px;height:78px;object-fit:cover;border-radius:7px;border:2px solid #2e2e35;cursor:pointer;transition:border-color .15s,transform .12s;}
+#mod-paro .pp img:hover{border-color:#f59e0b;transform:scale(1.06);}
+#mod-paro .pbadge{display:inline-flex;align-items:center;gap:5px;margin-top:7px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:20px;padding:3px 11px;font-size:.7rem;color:#f59e0b;font-weight:600;}
+#mod-paro .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:.08em;text-transform:uppercase;border:none;cursor:pointer;border-radius:9px;padding:11px 20px;transition:all .15s;}
+#mod-paro .btn-primary{background:#f59e0b;color:#000;width:100%;font-size:1rem;padding:15px;border-radius:10px;margin-top:6px;box-shadow:0 4px 20px rgba(245,158,11,.3);}
+#mod-paro .btn-primary:hover{background:#d97706;transform:translateY(-1px);}
+#mod-paro .btn-add{background:rgba(245,158,11,.08);color:#f59e0b;border:1px solid rgba(245,158,11,.2);margin-top:10px;}
+#mod-paro .btn-add:hover{background:rgba(245,158,11,.16);}
+#mod-paro .btn-export{background:#1f1f23;color:#f4f4f5;border:1px solid #3a3a44;padding:10px 18px;}
+#mod-paro .btn-export:hover{border-color:#f59e0b;color:#f59e0b;}
+#mod-paro .btn-danger{background:rgba(239,68,68,.08);color:#ef4444;border:1px solid rgba(239,68,68,.2);padding:10px 18px;}
+#mod-paro .rpt-wrap{display:none;margin-top:16px;animation:pSli .3s ease;}
+#mod-paro .rpt-wrap.on{display:flex;flex-direction:column;gap:12px;}
+#mod-paro .rpt-box{background:#18181b;border:1px solid #3a3a44;border-radius:12px;overflow:hidden;}
+#mod-paro .rpt-box-hd{background:#1f1f23;border-bottom:1px solid #2e2e35;padding:10px 14px;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#a1a1aa;display:flex;align-items:center;gap:8px;}
+#mod-paro .rpt-pre{white-space:pre-wrap;word-break:break-word;font-family:'Barlow',sans-serif;font-size:.82rem;line-height:1.7;color:#f4f4f5;padding:14px 14px 16px;}
+#mod-paro .btn-copiar{background:rgba(34,197,94,.1);color:#22c55e;border:2px solid rgba(34,197,94,.3);width:100%;font-size:1.05rem;padding:16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .15s;}
+#mod-paro .btn-copiar:hover{background:rgba(34,197,94,.2);transform:translateY(-1px);}
+#mod-paro .btn-copiar.copiado{background:rgba(34,197,94,.25);border-color:#22c55e;color:#22c55e;pointer-events:none;}
+#mod-paro .confirm-panel{display:none;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.25);border-radius:12px;padding:16px 18px;text-align:center;animation:pSli .3s ease;}
+#mod-paro .confirm-panel.on{display:block;}
+#mod-paro .confirm-badge{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;color:#22c55e;letter-spacing:.06em;margin-bottom:6px;}
+#mod-paro .confirm-hint{font-size:.78rem;color:#71717a;line-height:1.5;}
+#mod-paro .btn-registrar{background:#f59e0b;color:#000;width:100%;font-size:1rem;padding:15px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;display:none;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 20px rgba(245,158,11,.3);border:none;transition:all .15s;}
+#mod-paro .btn-registrar.on{display:flex;animation:pSli .3s ease;}
+#mod-paro .btn-registrar:hover{background:#d97706;transform:translateY(-1px);}
+#mod-paro .db-wrap{padding:14px;}
+#mod-paro .db-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+#mod-paro .db-total{margin-left:auto;background:#18181b;border:1px solid #2e2e35;border-radius:20px;padding:5px 14px;font-family:'Barlow Condensed',sans-serif;font-size:.8rem;color:#a1a1aa;letter-spacing:.06em;}
+#mod-paro .tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid #2e2e35;}
+#mod-paro table{border-collapse:collapse;width:100%;min-width:700px;background:#111113;}
+#mod-paro thead tr{background:#18181b;}
+#mod-paro th{padding:9px 10px;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:.67rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#71717a;white-space:nowrap;border-bottom:1px solid #2e2e35;}
+#mod-paro tbody tr{border-bottom:1px solid #2e2e35;transition:background .1s;}
+#mod-paro tbody tr:hover{background:#18181b;}
+#mod-paro td{padding:8px 10px;font-size:.77rem;color:#f4f4f5;vertical-align:top;}
+#mod-paro td.idc{font-family:'Barlow Condensed',sans-serif;font-size:.95rem;font-weight:700;color:#f59e0b;}
+#mod-paro .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.67rem;font-weight:600;}
+#mod-paro .pa{background:#27151f;color:#f472b6;}#mod-paro .pb{background:#152027;color:#38bdf8;}
+#mod-paro .pc{background:#152715;color:#4ade80;}#mod-paro .pd{background:#27231a;color:#fbbf24;}
+#mod-paro .del-btn{background:none;border:none;color:#71717a;cursor:pointer;font-size:1rem;padding:2px 5px;border-radius:4px;transition:color .12s;}
+#mod-paro .del-btn:hover{color:#ef4444;}
+#mod-paro .empty{text-align:center;padding:44px 20px;color:#71717a;}
+#mod-paro .empty .ei{font-size:2.8rem;margin-bottom:8px;}
+#mod-paro .empty p{font-size:.82rem;}
+#mod-paro .lb{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.93);align-items:center;justify-content:center;}
+#mod-paro .lb.on{display:flex;}
+#mod-paro .lb img{max-width:93vw;max-height:89vh;border-radius:9px;}
+#mod-paro .lb-x{position:absolute;top:14px;right:18px;font-size:2rem;color:#fff;cursor:pointer;background:none;border:none;}
+#mod-paro .p-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:#18181b;border:1px solid #3a3a44;color:#f4f4f5;padding:11px 22px;border-radius:30px;font-size:.82rem;font-weight:500;box-shadow:0 4px 24px rgba(0,0,0,.5);transition:transform .28s cubic-bezier(.175,.885,.32,1.275);z-index:9999;white-space:normal;max-width:88vw;text-align:center;line-height:1.4;}
+#mod-paro .p-toast.on{transform:translateX(-50%) translateY(0);}
+@media(max-width:480px){#mod-paro .g2,#mod-paro .g3{grid-template-columns:1fr;}}
+
+/* ═══════════════════════════════════════════════════════
+   ── MÓDULO C: REPARACIONES TEMPORALES (PREVENTIVO) ──
+═══════════════════════════════════════════════════════ */
+#mod-preventivo{background:#0a0a0f;color:#f1f0ff;font-family:'Lexend',sans-serif;}
+#mod-preventivo .nav{display:flex;background:#101018;border-bottom:1px solid #252535;position:sticky;top:41px;z-index:300;}
+#mod-preventivo .nb{flex:1;padding:12px 4px;background:none;border:none;color:#8b8aaa;font-family:'Lexend',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;}
+#mod-preventivo .nb.on{color:#e8642c;border-bottom-color:#e8642c;}
+#mod-preventivo .pnl{display:none;}#mod-preventivo .pnl.on{display:block;}
+#mod-preventivo .hdr{padding:18px 16px 14px;background:linear-gradient(135deg,#130e06 0%,#1f1508 60%,#130e06 100%);border-bottom:2px solid #c94f1e;display:flex;align-items:center;gap:12px;}
+#mod-preventivo .hdr-ico{font-size:2.2rem;line-height:1;filter:drop-shadow(0 2px 8px rgba(232,100,44,.4));}
+#mod-preventivo .hdr h1{font-family:'Lexend Mega',sans-serif;font-size:1.2rem;font-weight:800;color:#e8642c;letter-spacing:.02em;line-height:1.1;}
+#mod-preventivo .hdr p{font-size:.65rem;color:rgba(232,100,44,.55);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;}
+#mod-preventivo .hdr-badge{margin-left:auto;background:rgba(232,100,44,.1);border:1px solid rgba(232,100,44,.3);border-radius:10px;padding:7px 13px;text-align:center;flex-shrink:0;}
+#mod-preventivo .hdr-badge .n{font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:700;color:#e8642c;line-height:1;}
+#mod-preventivo .hdr-badge .l{font-size:.56rem;color:rgba(232,100,44,.55);letter-spacing:.1em;text-transform:uppercase;}
+#mod-preventivo .fw{max-width:640px;margin:0 auto;padding:16px 14px 80px;}
+#mod-preventivo .sec{background:#101018;border:1px solid #252535;border-radius:12px;padding:16px;margin-bottom:14px;transition:border-color .2s;}
+#mod-preventivo .sec:focus-within{border-color:#303048;}
+#mod-preventivo .sh{font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#e8642c;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+#mod-preventivo .sh::after{content:'';flex:1;height:1px;background:#252535;}
+#mod-preventivo label{display:block;font-size:.72rem;color:#b0afc8;margin-bottom:4px;margin-top:12px;font-weight:500;letter-spacing:.02em;}
+#mod-preventivo label:first-of-type{margin-top:0;}
+#mod-preventivo input[type=text],#mod-preventivo input[type=date],#mod-preventivo select,#mod-preventivo textarea{width:100%;background:#16161f;border:1px solid #252535;border-radius:8px;color:#f1f0ff;font-family:'Lexend',sans-serif;font-size:.88rem;padding:10px 12px;outline:none;appearance:none;transition:border-color .15s,box-shadow .15s;}
+#mod-preventivo input:focus,#mod-preventivo select:focus,#mod-preventivo textarea:focus{border-color:#e8642c;box-shadow:0 0 0 3px rgba(232,100,44,.1);}
+#mod-preventivo textarea{resize:vertical;min-height:78px;line-height:1.55;}
+#mod-preventivo select option{background:#16161f;}
+#mod-preventivo .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+#mod-preventivo .tg-group{display:flex;gap:7px;flex-wrap:wrap;}
+#mod-preventivo .tg{flex:1;min-width:70px;padding:9px 8px;border-radius:8px;border:1px solid #252535;background:#16161f;color:#8b8aaa;font-size:.75rem;font-weight:600;text-align:center;cursor:pointer;transition:all .14s;user-select:none;}
+#mod-preventivo .tg:hover{border-color:#e8642c;color:#f1f0ff;}
+#mod-preventivo .tg.on{background:#e8642c;border-color:#e8642c;color:#fff;}
+#mod-preventivo .imp-g{display:flex;gap:7px;}
+#mod-preventivo .imp{flex:1;padding:10px 6px;border-radius:8px;border:1px solid #252535;background:#16161f;color:#8b8aaa;font-size:.75rem;font-weight:600;text-align:center;cursor:pointer;transition:all .14s;}
+#mod-preventivo .imp[data-v="total"].on{background:#3a1010;border-color:#dc2626;color:#f87171;}
+#mod-preventivo .imp[data-v="parcial"].on{background:#3a2a08;border-color:#d97706;color:#fbbf24;}
+#mod-preventivo .imp[data-v="no"].on{background:#0d2e1a;border-color:#16a34a;color:#4ade80;}
+#mod-preventivo .sap-g{display:flex;gap:7px;}
+#mod-preventivo .sap{flex:1;padding:10px;border-radius:8px;border:1px solid #252535;background:#16161f;color:#8b8aaa;font-size:.78rem;font-weight:600;text-align:center;cursor:pointer;transition:all .14s;}
+#mod-preventivo .sap.yes.on{background:#0d2e1a;border-color:#16a34a;color:#4ade80;}
+#mod-preventivo .sap.no.on{background:#3a1010;border-color:#dc2626;color:#f87171;}
+#mod-preventivo .pz{border:2px dashed #303048;border-radius:10px;padding:16px;text-align:center;cursor:pointer;position:relative;transition:all .15s;}
+#mod-preventivo .pz:hover{border-color:#e8642c;background:rgba(232,100,44,.04);}
+#mod-preventivo .pz input[type=file]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;}
+#mod-preventivo .pz .pi{font-size:1.8rem;margin-bottom:5px;}
+#mod-preventivo .pz .pl{font-size:.72rem;color:#8b8aaa;}
+#mod-preventivo .pz .pl b{color:#e8642c;}
+#mod-preventivo .pp{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+#mod-preventivo .pp img{width:84px;height:84px;object-fit:cover;border-radius:8px;border:2px solid #252535;cursor:pointer;transition:all .14s;}
+#mod-preventivo .pp img:hover{border-color:#e8642c;transform:scale(1.05);}
+#mod-preventivo .pbadge{display:inline-flex;align-items:center;gap:5px;margin-top:8px;background:rgba(232,100,44,.1);border:1px solid rgba(232,100,44,.2);border-radius:20px;padding:4px 12px;font-size:.7rem;color:#e8642c;font-weight:600;}
+#mod-preventivo .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:'Lexend',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.04em;border:none;cursor:pointer;border-radius:10px;padding:11px 20px;transition:all .15s;}
+#mod-preventivo .btn-main{background:#e8642c;color:#fff;width:100%;font-size:.98rem;padding:15px;border-radius:11px;margin-top:6px;box-shadow:0 4px 20px rgba(232,100,44,.3);}
+#mod-preventivo .btn-main:hover{background:#c94f1e;transform:translateY(-1px);}
+#mod-preventivo .btn-copy{background:rgba(22,163,74,.12);color:#4ade80;border:1px solid rgba(22,163,74,.3);padding:13px 22px;width:100%;font-size:.95rem;}
+#mod-preventivo .btn-copy:hover{background:rgba(22,163,74,.22);}
+#mod-preventivo .btn-copy.done{background:rgba(22,163,74,.25);}
+#mod-preventivo .btn-nuevo{background:#16161f;color:#8b8aaa;border:1px solid #252535;padding:12px;width:100%;margin-top:8px;}
+#mod-preventivo .btn-nuevo:hover{color:#f1f0ff;}
+#mod-preventivo .btn-exp{background:#16161f;color:#b0afc8;border:1px solid #252535;padding:10px 18px;}
+#mod-preventivo .btn-exp:hover{border-color:#e8642c;color:#e8642c;}
+#mod-preventivo .btn-del2{background:rgba(220,38,38,.08);color:#dc2626;border:1px solid rgba(220,38,38,.2);padding:10px 18px;}
+#mod-preventivo .wa-screen{display:none;position:fixed;inset:0;z-index:400;background:#0a0a0f;overflow-y:auto;flex-direction:column;}
+#mod-preventivo .wa-screen.on{display:flex;animation:rtSlUp .25s ease;}
+@keyframes rtSlUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
+#mod-preventivo .wa-topbar{background:#101018;border-bottom:1px solid #252535;padding:13px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;}
+#mod-preventivo .wa-av{width:36px;height:36px;border-radius:50%;background:#25d366;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+#mod-preventivo .wa-gn{color:#f1f0ff;font-weight:600;font-size:.85rem;}
+#mod-preventivo .wa-gs{color:#8b8aaa;font-size:.67rem;}
+#mod-preventivo .wa-body{flex:1;background:#0b141a;padding:14px 12px;}
+#mod-preventivo .wa-strip-lbl{font-size:.67rem;color:#8696a0;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+#mod-preventivo .wa-strip{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+#mod-preventivo .wa-strip img{width:72px;height:72px;object-fit:cover;border-radius:7px;cursor:pointer;}
+#mod-preventivo .wa-bubble{background:#1e3a29;border-radius:0 12px 12px 12px;padding:12px 14px;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+#mod-preventivo .wa-bubble::before{content:'';position:absolute;top:0;left:-7px;border-width:0 7px 9px 0;border-style:solid;border-color:transparent #1e3a29 transparent transparent;}
+#mod-preventivo .wa-bubble pre{white-space:pre-wrap;word-break:break-word;font-family:'Lexend',sans-serif;font-size:.82rem;line-height:1.65;color:#e9edef;}
+#mod-preventivo .wa-foot{display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-top:5px;}
+#mod-preventivo .wa-time{font-size:.67rem;color:#8696a0;}
+#mod-preventivo .wa-ticks{color:#53bdeb;font-size:.75rem;}
+#mod-preventivo .wa-actions{padding:14px;display:flex;flex-direction:column;gap:9px;background:#101018;border-top:1px solid #252535;}
+#mod-preventivo .cc-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+#mod-preventivo .cc-overlay.on{display:flex;}
+#mod-preventivo .cc-ico{font-size:4rem;animation:rtPop .3s cubic-bezier(.175,.885,.32,1.4);}
+@keyframes rtPop{from{transform:scale(0);}to{transform:scale(1);}}
+#mod-preventivo .cc-txt{font-family:'Lexend Mega',sans-serif;font-size:1.3rem;color:#fff;letter-spacing:.02em;}
+#mod-preventivo .cc-sub{font-size:.8rem;color:rgba(255,255,255,.55);}
+#mod-preventivo .db-wrap{padding:14px;}
+#mod-preventivo .db-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+#mod-preventivo .db-total{margin-left:auto;background:#16161f;border:1px solid #252535;border-radius:20px;padding:5px 14px;font-size:.75rem;color:#8b8aaa;}
+#mod-preventivo .tbl-wrap{overflow-x:auto;border-radius:11px;border:1px solid #252535;}
+#mod-preventivo table{border-collapse:collapse;width:100%;min-width:720px;background:#101018;}
+#mod-preventivo thead tr{background:#16161f;}
+#mod-preventivo th{padding:9px 11px;text-align:left;font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#8b8aaa;white-space:nowrap;border-bottom:1px solid #252535;}
+#mod-preventivo tbody tr{border-bottom:1px solid #252535;transition:background .1s;}
+#mod-preventivo tbody tr:hover{background:#16161f;}
+#mod-preventivo td{padding:8px 11px;font-size:.77rem;color:#f1f0ff;vertical-align:top;}
+#mod-preventivo .id-c{font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:700;color:#e8642c;}
+#mod-preventivo .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.67rem;font-weight:600;}
+#mod-preventivo .p-red{background:rgba(220,38,38,.15);color:#f87171;}
+#mod-preventivo .p-amber{background:rgba(217,119,6,.15);color:#fbbf24;}
+#mod-preventivo .p-green{background:rgba(22,163,74,.12);color:#4ade80;}
+#mod-preventivo .p-blue{background:rgba(59,130,246,.12);color:#93c5fd;}
+#mod-preventivo .del-btn{background:none;border:none;color:#8b8aaa;cursor:pointer;font-size:1rem;padding:2px 5px;border-radius:4px;transition:color .12s;}
+#mod-preventivo .del-btn:hover{color:#dc2626;}
+#mod-preventivo .empty{text-align:center;padding:48px 20px;color:#8b8aaa;}
+#mod-preventivo .empty .ei{font-size:3rem;margin-bottom:10px;}
+#mod-preventivo .lb{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.93);align-items:center;justify-content:center;}
+#mod-preventivo .lb.on{display:flex;}
+#mod-preventivo .lb img{max-width:93vw;max-height:89vh;border-radius:10px;}
+#mod-preventivo .lb-x{position:absolute;top:14px;right:18px;font-size:2rem;color:#fff;cursor:pointer;background:none;border:none;}
+#mod-preventivo .rt-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:#16161f;border:1px solid #303048;color:#f1f0ff;padding:11px 20px;border-radius:30px;font-size:.82rem;font-weight:500;box-shadow:0 4px 24px rgba(0,0,0,.5);transition:transform .28s cubic-bezier(.175,.885,.32,1.275);z-index:9999;white-space:nowrap;}
+#mod-preventivo .rt-toast.on{transform:translateX(-50%) translateY(0);}
+@media(max-width:480px){#mod-preventivo .g2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     PANTALLA INICIAL — LAUNCHER
+═══════════════════════════════════════════════════════ -->
+<div id="launcher">
+  <div class="launcher-header">
+    <div class="launcher-logo">🏭</div>
+    <div class="launcher-title">Centro de Reportes</div>
+    <div class="launcher-sub">Envases Universales · Mantenimiento & Producción</div>
+  </div>
+  <div class="launcher-cards">
+
+    <div class="launcher-card c-orange" onclick="abrirModulo('correctivo')">
+      <div class="card-icon">⚡</div>
+      <div class="card-body">
+        <div class="card-title">Reporte de Falla</div>
+        <div class="card-desc">Mantenimiento correctivo · MTTR · MTBF · Causa raíz · Estado final</div>
+      </div>
+      <div class="card-arrow">›</div>
+    </div>
+
+    <div class="launcher-card c-amber" onclick="abrirModulo('paro')">
+      <div class="card-icon">⚠️</div>
+      <div class="card-body">
+        <div class="card-title">Reporte de Paro</div>
+        <div class="card-desc">Paros de producción · Tiempo muerto · Acciones realizadas · Cuadrilla</div>
+      </div>
+      <div class="card-arrow">›</div>
+    </div>
+
+    <div class="launcher-card c-teal" onclick="abrirModulo('preventivo')">
+      <div class="card-icon">🔧</div>
+      <div class="card-body">
+        <div class="card-title">Reparación Temporal</div>
+        <div class="card-desc">Hallazgos · SAP · Tipo de mantenimiento · Impacto en operación</div>
+      </div>
+      <div class="card-arrow">›</div>
+    </div>
+
+  </div>
+  <div class="launcher-version">v3.0 · Sistema integrado de reportes</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     CONTENEDOR DE MÓDULOS
+═══════════════════════════════════════════════════════ -->
+<div id="modules">
+
+  <!-- ══════ MÓDULO A: REPORTE DE FALLA ══════ -->
+  <div class="module" id="mod-correctivo">
+    <div class="back-bar">
+      <button class="back-btn" onclick="volverLauncher()">‹ Inicio</button>
+      <span class="back-label">REPORTE DE FALLA</span>
+    </div>
+    <div class="nav">
+      <button class="nb act" onclick="rfGoTab(this,'form')">⚡ Nueva Falla</button>
+      <button class="nb" onclick="rfGoTab(this,'hist')">📊 Historial · KPIs</button>
+    </div>
+    <div class="panel act" id="rf-panel-form">
+      <div class="hdr">
+        <div class="hdr-ic">⚡</div>
+        <div><h1>Reporte de Falla</h1><p>Envases Universales · Mantenimiento</p></div>
+        <div class="folio-badge" id="rf-foliobadge">RF-0001</div>
+      </div>
+      <div class="wrap">
+        <div class="sec" id="rf-s1">
+          <div class="sec-hd"><span class="ico">📋</span><div><div class="tit">1. Información general</div><div class="sub">¿Dónde y en qué?</div></div><span class="done-mark">✓</span></div>
+          <div class="sec-body">
+            <div><span class="lbl">¿Qué línea falló?</span>
+              <div class="chips" id="rf-chips-linea">
+                <div class="chip" onclick="rfSelLinea(this,'L1','Línea 1')">Línea 1</div>
+                <div class="chip" onclick="rfSelLinea(this,'L2','Línea 2')">Línea 2</div>
+                <div class="chip" onclick="rfSelLinea(this,'L3','Línea 3')">Línea 3</div>
+                <div class="chip" onclick="rfSelLinea(this,'L4','Línea 4')">Línea 4</div>
+                <div class="chip" onclick="rfSelLinea(this,'L7','Línea 7')">Línea 7</div>
+                <div class="chip" onclick="rfSelLinea(this,'L8','Línea 8')">Línea 8</div>
+                <div class="chip" onclick="rfSelLinea(this,'PAL','Paletizador')">Paletizador</div>
+                <div class="chip" onclick="rfSelLinea(this,'SRV','Servicios')">Servicios</div>
+              </div>
+            </div>
+            <div id="rf-maq-wrap" style="display:none;"><span class="lbl">¿Qué máquina falló?</span><div class="chips sub-chips on" id="rf-chips-maq"></div></div>
+            <div id="rf-equipo-wrap" style="display:none;"><span class="lbl">Nombre del equipo <span style="color:#6b7280;font-weight:400;text-transform:none;letter-spacing:0;">(confirma o edita)</span></span><input type="text" id="rf-nombreEquipo" placeholder="Se llena al seleccionar máquina" oninput="rfChkSec1()"></div>
+          </div>
+        </div>
+        <div class="sec" id="rf-s2">
+          <div class="sec-hd"><span class="ico">🔍</span><div><div class="tit">2. ¿Qué pasó?</div><div class="sub">Síntoma y prioridad</div></div><span class="done-mark">✓</span></div>
+          <div class="sec-body">
+            <div><span class="q">¿Qué hacía (o dejó de hacer) el equipo?</span><textarea id="rf-sintoma" rows="2" placeholder="Ej: La troqueladora dejó de avanzar, se escuchó ruido metálico y se detuvo con alarma E-04..." oninput="rfChkSec2()"></textarea></div>
+            <div><span class="lbl">Prioridad</span>
+              <div class="chips prior-chips">
+                <div class="chip" data-p="URGENTE" onclick="rfSelPrior(this,'URGENTE','sel-red')">🔴 Urgente — línea parada</div>
+                <div class="chip" data-p="ALTA" onclick="rfSelPrior(this,'ALTA','sel-amber')">🟠 Alta — riesgo de paro</div>
+                <div class="chip" data-p="MEDIA" onclick="rfSelPrior(this,'MEDIA','sel-blue')">🟡 Media — funciona parcial</div>
+                <div class="chip" data-p="BAJA" onclick="rfSelPrior(this,'BAJA','sel-green')">🟢 Baja — sin impacto</div>
+              </div>
+            </div>
+            <div><span class="lbl">¿Quién detectó el problema?</span>
+              <select id="rf-reportante">
+                <option value="">— Operador / supervisor que reportó —</option>
+                <optgroup label="Supervisores"><option>SANCHEZ ZAMBRANO RAUL — Supervisor Turno</option><option>VICTOR SEPULVEDA — Supervisor Mantenimiento</option></optgroup>
+                <optgroup label="Técnicos"><option>ROSALES CAMACHO EDUARDO</option><option>COELLO HERNANDEZ CARLOS EDUARDO</option><option>JIMENEZ CORDOVA JONATHAN</option><option>VELAZCO DOMINGUEZ ANGEL ALBERTO</option><option>GUERRERO RUIZ DANIEL</option><option>MARQUEZ CAZARIN JOSE ANGEL</option><option>OBESO SOTO GILDARDO ERNESTO</option><option>ALCOCER DIAZ MARIO</option><option>PEREZ VAZQUEZ LORENZO</option><option>GARCIA GARCIA MIGUEL</option><option>ABELAR LOPEZ DANIEL DOMINGO</option><option>CAMARGO CRUZ ALDO SAUL</option><option>RAMIREZ LEYVA JULIO CESAR</option><option>HERRERA FLORES JESUS DAVID</option><option>LAZCANO VELAZQUEZ EDSON MISAEL</option><option>CASTAÑEDA PATRON EDDWAR ALEXIS</option></optgroup>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="sec" id="rf-s3">
+          <div class="sec-hd"><span class="ico">⏱️</span><div><div class="tit">3. Tiempos</div><div class="sub">MTTR y downtime se calculan solos</div></div><span class="done-mark">✓</span></div>
+          <div class="sec-body">
+            <div class="g2">
+              <div><span class="lbl">📅 Fecha de la falla</span><input type="date" id="rf-fechaFalla" onchange="rfCalcTiempos()"></div>
+              <div><span class="lbl">⚡ Hora que falló</span><input type="time" id="rf-hFalla" onchange="rfCalcTiempos()"></div>
+            </div>
+            <div class="g2">
+              <div><span class="lbl">🔧 Inicio intervención</span><input type="time" id="rf-hInicioInt" onchange="rfCalcTiempos()"></div>
+              <div><span class="lbl">✅ Fin / vuelta marcha</span><input type="time" id="rf-hFinInt" onchange="rfCalcTiempos()"></div>
+            </div>
+            <div class="kpi-row">
+              <div class="kpi-card down"><div class="kpi-v" id="rf-kDowntime">—</div><div class="kpi-u">minutos</div><div class="kpi-l">Downtime</div></div>
+              <div class="kpi-card mttr"><div class="kpi-v" id="rf-kMttr">—</div><div class="kpi-u">minutos</div><div class="kpi-l">MTTR</div></div>
+            </div>
+            <div class="mtbf-info"><div class="v" id="rf-kMtbf">— selecciona equipo</div><div class="l" id="rf-kMtbfSrc">MTBF · tiempo desde la última falla registrada de este equipo</div></div>
+          </div>
+        </div>
+        <div class="sec" id="rf-s4">
+          <div class="sec-hd"><span class="ico">🛠️</span><div><div class="tit">4. Diagnóstico y acción</div><div class="sub">Qué causó y qué se hizo</div></div><span class="done-mark">✓</span></div>
+          <div class="sec-body">
+            <div><span class="lbl">Tipo de falla</span>
+              <div class="chips">
+                <div class="chip" onclick="rfSelChip(this,'tipoFalla','⚙️ Mecánica')">⚙️ Mecánica</div>
+                <div class="chip" onclick="rfSelChip(this,'tipoFalla','⚡ Eléctrica')">⚡ Eléctrica</div>
+                <div class="chip" onclick="rfSelChip(this,'tipoFalla','💨 Neumática')">💨 Neumática</div>
+                <div class="chip" onclick="rfSelChip(this,'tipoFalla','🖥️ Electrónica')">🖥️ Electrónica</div>
+                <div class="chip" onclick="rfSelChip(this,'tipoFalla','💧 Hidráulica')">💧 Hidráulica</div>
+                <div class="chip" onclick="rfSelChip(this,'tipoFalla','🔩 Desgaste')">🔩 Desgaste</div>
+              </div>
+            </div>
+            <div><span class="q">¿Por qué falló? — Causa raíz</span><span class="hint">Breve y directo: desgaste, falta de lubricación, error de operación, fin de vida útil...</span><textarea id="rf-causaRaiz" rows="2" placeholder="Ej: Rodamiento agotó vida útil por ausencia de lubricación programada en MP..." oninput="rfChkSec4()"></textarea></div>
+            <div><span class="q">¿Qué se hizo para que funcionara?</span><span class="hint">Detalle técnico de la reparación.</span><textarea id="rf-trabajoRealizado" rows="3" placeholder="Ej: Se sustituyó rodamiento axial SKF 6205..." oninput="rfChkSec4()"></textarea></div>
+            <div><span class="q">Refacciones y consumibles utilizados</span><textarea id="rf-refacciones" rows="2" placeholder="Ej: Rodamiento SKF 6205 (No. parte: 6205-2RS)..."></textarea></div>
+          </div>
+        </div>
+        <div class="sec" id="rf-s5">
+          <div class="sec-hd"><span class="ico">🏁</span><div><div class="tit">5. Cierre</div><div class="sub">Estado final y firma</div></div><span class="done-mark">✓</span></div>
+          <div class="sec-body">
+            <div><span class="lbl">Estado final del equipo</span>
+              <div class="chips estado-chips">
+                <div class="chip" onclick="rfSelChip(this,'estadoFinal','✅ Operativo — reparación completa','sel-green')">✅ Operativo</div>
+                <div class="chip" onclick="rfSelChip(this,'estadoFinal','👁️ En observación — monitorear','sel-amber')">👁️ En observación</div>
+                <div class="chip" onclick="rfSelChip(this,'estadoFinal','⚠️ Reparación temporal — pendiente definitiva','sel-amber')">⚠️ Temporal</div>
+                <div class="chip" onclick="rfSelChip(this,'estadoFinal','🔴 Requiere paro programado','sel-red')">🔴 Requiere paro</div>
+              </div>
+            </div>
+            <div><span class="lbl">Técnico responsable de la reparación</span>
+              <select id="rf-tecnico" onchange="rfChkSec5()">
+                <option value="">— Selecciona técnico —</option>
+                <optgroup label="Cuadrilla A"><option>ROSALES CAMACHO EDUARDO</option><option>COELLO HERNANDEZ CARLOS EDUARDO</option></optgroup>
+                <optgroup label="Cuadrilla B"><option>JIMENEZ CORDOVA JONATHAN</option></optgroup>
+                <optgroup label="Cuadrilla C"><option>VELAZCO DOMINGUEZ ANGEL ALBERTO</option><option>GUERRERO RUIZ DANIEL</option><option>SANCHEZ ZAMBRANO RAUL</option><option>MARQUEZ CAZARIN JOSE ANGEL</option></optgroup>
+                <optgroup label="Cuadrilla D"><option>OBESO SOTO GILDARDO ERNESTO</option><option>ALCOCER DIAZ MARIO</option><option>PEREZ VAZQUEZ LORENZO</option><option>GARCIA GARCIA MIGUEL</option></optgroup>
+                <optgroup label="MTD"><option>ABELAR LOPEZ DANIEL DOMINGO</option><option>CAMARGO CRUZ ALDO SAUL</option><option>RAMIREZ LEYVA JULIO CESAR</option><option>HERRERA FLORES JESUS DAVID</option><option>LAZCANO VELAZQUEZ EDSON MISAEL</option><option>CASTAÑEDA PATRON EDDWAR ALEXIS</option></optgroup>
+                <optgroup label="MP/C"><option>VICTOR SEPULVEDA</option></optgroup>
+              </select>
+            </div>
+            <div><span class="q">Observaciones y recomendaciones</span><textarea id="rf-observaciones" rows="2" placeholder="Ej: Ajustar frecuencia de MP a cada 500h..."></textarea></div>
+          </div>
+        </div>
+        <button class="btn-gen" onclick="rfGenerar()">📄 Generar reporte</button>
+        <div class="result" id="rf-result">
+          <div class="msg-box"><div class="msg-hd">✅ reporte completo · listo para copiar y enviar</div><pre class="msg-pre" id="rf-msgPre"></pre></div>
+          <button class="btn-copy" id="rf-btnCopy" onclick="rfCopiar()">📋 Copiar al portapapeles</button>
+          <div class="confirm-box" id="rf-confirmBox"><b>✅ ¡Copiado! Pégalo donde necesites.</b><span>Cuando hayas terminado, registra para guardar en Sheets y Excel.</span></div>
+          <div class="post-btns" id="rf-postBtns">
+            <button class="btn-save" onclick="rfGuardar()">💾 Registrar · Excel · Drive</button>
+            <button class="btn-disc" onclick="rfDescartar()">🗑 Descartar y nueva falla</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="rf-panel-hist">
+      <div class="hist-wrap">
+        <div class="hkpi-row" id="rf-hkpiRow"></div>
+        <div class="hbar">
+          <button class="bxl" onclick="rfExportExcel()">📥 Excel</button>
+          <button class="bdel" onclick="rfBorrarTodo()">🗑 Borrar todo</button>
+          <span class="nreg" id="rf-nReg">0 registros</span>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Folio</th><th>Fecha</th><th>Línea</th><th>Equipo</th><th>Prioridad</th><th>Downtime</th><th>MTTR</th><th>MTBF</th><th>Estado</th><th></th></tr></thead><tbody id="rf-tblBody"></tbody></table></div>
+        <div class="empty" id="rf-emptyMsg"><div class="ei">📭</div><p>Sin registros aún.</p></div>
+      </div>
+    </div>
+    <div class="rf-toast" id="rf-toast"></div>
+  </div>
+
+  <!-- ══════ MÓDULO B: REPORTE DE PARO ══════ -->
+  <div class="module" id="mod-paro">
+    <div class="back-bar">
+      <button class="back-btn" onclick="volverLauncher()">‹ Inicio</button>
+      <span class="back-label">REPORTE DE PARO</span>
+    </div>
+    <div class="nav">
+      <button class="nav-btn active" onclick="pGoTab(this,'form')">📋 Nuevo Paro</button>
+      <button class="nav-btn" onclick="pGoTab(this,'db')">🗄️ Historial</button>
+    </div>
+    <div class="panel active" id="p-panel-form">
+      <div class="hdr"><div class="hdr-icon">⚠️</div><div><h1>Reporte de Paro</h1><p>Envases Universales · Producción</p></div><div class="hdr-badge"><div class="n" id="p-nextId">—</div><div class="l">Sig. #</div></div></div>
+      <div class="fw">
+        <div class="sec"><div class="sec-hd">① Identificación del turno</div>
+          <div class="g2">
+            <div><label>Cuadrilla</label><select id="p-cuadrilla"><option value="">— Selecciona —</option><option>Cuadrilla A</option><option>Cuadrilla B</option><option>Cuadrilla C</option><option>Cuadrilla D</option></select></div>
+            <div><label>Fecha</label><input type="date" id="p-fecha"></div>
+          </div>
+          <div class="g2">
+            <div><label>Turno</label><select id="p-turno"><option value="">— Selecciona —</option><option>Turno 1 (07:00 a.m – 19:00 p.m)</option><option>Turno 2 (19:00 p.m – 07:00 a.m)</option></select></div>
+            <div><label>Técnico que reporta</label><select id="p-reporta"><option value="">— Selecciona técnico —</option><option>ROSALES CAMACHO EDUARDO</option><option>COELLO HERNANDEZ CARLOS EDUARDO</option><option>JIMENEZ CORDOVA JONATHAN</option><option>VELAZCO DOMINGUEZ ANGEL ALBERTO</option><option>GUERRERO RUIZ DANIEL</option><option>MARQUEZ CAZARIN JOSE ANGEL</option><option>OBESO SOTO GILDARDO ERNESTO</option><option>ALCOCER DIAZ MARIO</option><option>PEREZ VAZQUEZ LORENZO</option><option>GARCIA GARCIA MIGUEL</option><option>ABELAR LOPEZ DANIEL DOMINGO</option><option>CAMARGO CRUZ ALDO SAUL</option><option>RAMIREZ LEYVA JULIO CESAR</option><option>HERRERA FLORES JESUS DAVID</option><option>LAZCANO VELAZQUEZ EDSON MISAEL</option><option>CASTAÑEDA PATRON EDDWAR ALEXIS</option></select></div>
+          </div>
+        </div>
+        <div class="sec"><div class="sec-hd">② Línea y equipo</div>
+          <label>Línea</label>
+          <select id="p-linea" onchange="pActualizarMaquinas()"><option value="">— Selecciona línea —</option><option value="L1">Línea 1</option><option value="L2">Línea 2</option><option value="L3">Línea 3</option><option value="L4">Línea 4</option><option value="L7">Línea 7</option><option value="L8">Línea 8</option><option value="PAL1">Paletizador Línea 1</option><option value="PAL3">Paletizador Línea 3</option><option value="PAL4">Paletizador Línea 4</option><option value="PAL72">Paletizador Línea 7 y 2</option><option value="PAL8">Paletizador Línea 8</option></select>
+          <label>Máquina / Equipo</label>
+          <select id="p-maquina"><option value="">— Selecciona línea primero —</option></select>
+        </div>
+        <div class="sec"><div class="sec-hd">③ Tiempos del paro</div>
+          <div class="g3">
+            <div><label>Hora inicio paro</label><input type="time" id="p-hIni" onchange="pCalcTM()"></div>
+            <div><label>Hora fin acciones</label><input type="time" id="p-hFin" onchange="pCalcTM()"></div>
+            <div><label>Hora puesta en marcha</label><input type="time" id="p-hMarcha" onchange="pCalcTM()"></div>
+          </div>
+          <label>Tiempo muerto total</label>
+          <div class="tmuerto" id="p-tMuerto">— ingresa hora de inicio y puesta en marcha —</div>
+        </div>
+        <div class="sec"><div class="sec-hd">④ Descripción del problema</div><textarea id="p-problema" placeholder="¿Qué ocurrió? ¿Cómo se detectó? Síntomas observados..."></textarea></div>
+        <div class="sec"><div class="sec-hd">⑤ Acciones realizadas</div><div class="acc-list" id="p-accList"></div><button class="btn btn-add" onclick="pAddAcc()">➕ Agregar acción</button></div>
+        <div class="sec"><div class="sec-hd">⑥ Evidencia fotográfica</div>
+          <label>📊 Foto de indicadores</label>
+          <div class="pz"><input type="file" id="p-fInd" accept="image/*" multiple onchange="pLoadPhotos(this,'p-ppInd','p-bdInd','ind')"><div class="pi">📊</div><div class="pl">Toca para <b>foto</b> o galería</div></div>
+          <div id="p-bdInd"></div><div class="pp" id="p-ppInd"></div>
+          <label style="margin-top:14px;">📸 Foto del problema</label>
+          <div class="pz"><input type="file" id="p-fProb" accept="image/*" multiple onchange="pLoadPhotos(this,'p-ppProb','p-bdProb','prob')"><div class="pi">🔧</div><div class="pl">Toca para <b>foto</b> o galería</div></div>
+          <div id="p-bdProb"></div><div class="pp" id="p-ppProb"></div>
+        </div>
+        <button class="btn btn-primary" onclick="pGenerarReporte()">📄 Generar reporte</button>
+        <div class="rpt-wrap" id="p-rptWrap">
+          <div class="rpt-box"><div class="rpt-box-hd">📄 Reporte generado · listo para copiar</div><pre id="p-rptMsg" class="rpt-pre"></pre></div>
+          <button class="btn-copiar" id="p-btnCopiar" onclick="pCopiarReporte()">📋 Copiar al portapapeles</button>
+          <div class="confirm-panel" id="p-confirmPanel"><div class="confirm-badge">✅ ¡Texto copiado en el portapapeles!</div><p class="confirm-hint">Puedes pegarlo ahora donde lo necesites.<br>Cuando termines, presiona el botón de abajo para guardar el registro y limpiar el formulario.</p></div>
+          <button class="btn-registrar" id="p-btnRegistrar" onclick="pRegistrarYLimpiar()">✅ Registrar y limpiar formulario</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="p-panel-db">
+      <div class="db-wrap">
+        <div class="db-bar"><button class="btn btn-export" onclick="pExportExcel()">📥 Exportar historial Excel</button><button class="btn btn-danger" onclick="pLimpiarDB()">🗑 Limpiar todo</button><div class="db-total" id="p-dbTotal">0 registros</div></div>
+        <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Cuadrilla</th><th>Turno</th><th>Línea</th><th>Máquina</th><th>T. Muerto</th><th>Problema</th><th>H.Inicio</th><th>H.Marcha</th><th>Técnico</th><th></th></tr></thead><tbody id="p-dbBody"></tbody></table></div>
+        <div class="empty" id="p-emptyMsg"><div class="ei">📭</div><p>Sin registros aún.<br>Ve a <b>Nuevo Paro</b> para comenzar.</p></div>
+      </div>
+    </div>
+    <div class="lb" id="p-lb" onclick="pCloseLB()"><button class="lb-x">✕</button><img id="p-lbImg" src="" alt=""></div>
+    <div class="p-toast" id="p-toast"></div>
+  </div>
+
+  <!-- ══════ MÓDULO C: REPARACIONES TEMPORALES ══════ -->
+  <div class="module" id="mod-preventivo">
+    <div class="back-bar">
+      <button class="back-btn" onclick="volverLauncher()">‹ Inicio</button>
+      <span class="back-label">REPARACIÓN TEMPORAL</span>
+    </div>
+    <div class="nav">
+      <button class="nb on" onclick="rtGoTab(this,'form')">🔧 Nuevo Hallazgo</button>
+      <button class="nb" onclick="rtGoTab(this,'db')">🗄️ Historial</button>
+    </div>
+    <div class="pnl on" id="rt-pnl-form">
+      <div class="hdr"><div class="hdr-ico">🔧</div><div><h1>Reparación Temporal</h1><p>Envases Universales · Mantenimiento</p></div><div class="hdr-badge"><div class="n" id="rt-nextId">—</div><div class="l">Sig. #</div></div></div>
+      <div class="fw">
+        <div class="sec"><div class="sh">① Identificación</div>
+          <div class="g2">
+            <div><label>Línea</label><select id="rt-linea"><option value="">— Selecciona —</option><option>Línea 1</option><option>Línea 2</option><option>Línea 3</option><option>Línea 4</option><option>Línea 7</option><option>Línea 8</option><option>Paletizador L1</option><option>Paletizador L3</option><option>Paletizador L4</option><option>Paletizador L7y2</option><option>Paletizador L8</option><option>Área general</option></select></div>
+            <div><label>Máquina / Equipo</label><input type="text" id="rt-maquina" placeholder="Ej. Soudronic BWM"></div>
+          </div>
+          <div class="g2" style="margin-top:12px;">
+            <div><label>Detectada por</label><select id="rt-tecnico"><option value="">— Técnico —</option><option>ROSALES CAMACHO EDUARDO</option><option>COELLO HERNANDEZ CARLOS EDUARDO</option><option>JIMENEZ CORDOVA JONATHAN</option><option>VELAZCO DOMINGUEZ ANGEL ALBERTO</option><option>GUERRERO RUIZ DANIEL</option><option>MARQUEZ CAZARIN JOSE ANGEL</option><option>OBESO SOTO GILDARDO ERNESTO</option><option>ALCOCER DIAZ MARIO</option><option>PEREZ VAZQUEZ LORENZO</option><option>GARCIA GARCIA MIGUEL</option><option>ABELAR LOPEZ DANIEL DOMINGO</option><option>CAMARGO CRUZ ALDO SAUL</option><option>RAMIREZ LEYVA JULIO CESAR</option><option>HERRERA FLORES JESUS DAVID</option><option>LAZCANO VELAZQUEZ EDSON MISAEL</option><option>CASTAÑEDA PATRON EDDWAR ALEXIS</option></select></div>
+            <div><label>Fecha de detección</label><input type="date" id="rt-fecha"></div>
+          </div>
+        </div>
+        <div class="sec"><div class="sh">② Descripción de la Reparación</div>
+          <label>¿Qué es la reparación temporal?</label>
+          <textarea id="rt-descripcion" placeholder="Ej. Cable de sensor sujeto con brida plástica en lugar de conector original..."></textarea>
+          <label style="margin-top:14px;">¿Impide el funcionamiento adecuado?</label>
+          <div class="imp-g"><div class="imp on" data-v="total">🔴 Sí, totalmente</div><div class="imp" data-v="parcial">🟡 Parcialmente</div><div class="imp" data-v="no">🟢 No impide</div></div>
+        </div>
+        <div class="sec"><div class="sh">③ Foto de la Reparación</div>
+          <div class="pz"><input type="file" id="rt-fotoFile" accept="image/*" multiple onchange="rtCargaFotos(this)"><div class="pi">📸</div><div class="pl">Toca para <b>tomar foto</b> o seleccionar</div></div>
+          <div id="rt-fotoBadge"></div><div class="pp" id="rt-fotoPreview"></div>
+        </div>
+        <div class="sec"><div class="sh">④ Mantenimiento y SAP</div>
+          <label>Tipo de mantenimiento al que se encamina</label>
+          <div class="tg-group" id="rt-mantGroup"><div class="tg on" data-v="Correctivo">Correctivo</div><div class="tg" data-v="Preventivo">Preventivo</div><div class="tg" data-v="Mejora/Modificación">Mejora / Modificación</div></div>
+          <label style="margin-top:16px;">¿Tiene orden creada en SAP?</label>
+          <div class="sap-g"><div class="sap yes on" data-v="Sí">✅ Sí</div><div class="sap no" data-v="No">❌ No</div></div>
+          <div id="rt-sapNumWrap" style="margin-top:10px;"><label>Número de orden SAP</label><input type="text" id="rt-sapNum" placeholder="Ej. 1002345678" style="font-family:'JetBrains Mono',monospace;letter-spacing:.05em;"></div>
+          <label style="margin-top:14px;">Observaciones / plan de acción</label>
+          <textarea id="rt-obs" placeholder="Refacción en pedido, fecha estimada de reparación definitiva..."></textarea>
+        </div>
+        <button class="btn btn-main" onclick="rtRegistrar()">📲 Registrar y generar mensaje WhatsApp</button>
+      </div>
+    </div>
+    <div class="wa-screen" id="rt-waScreen">
+      <div class="wa-topbar"><div class="wa-av">🏭</div><div><div class="wa-gn">MANTENIMIENTO · ENVASES UNIVERSALES</div><div class="wa-gs">Mensaje listo — copia y pega en WhatsApp</div></div></div>
+      <div class="wa-body">
+        <div id="rt-waStripLbl" class="wa-strip-lbl" style="display:none;">📎 Fotos — adjuntar con el mensaje</div>
+        <div class="wa-strip" id="rt-waStrip"></div>
+        <div class="wa-bubble"><pre id="rt-waMsg"></pre><div class="wa-foot"><span class="wa-time" id="rt-waTime"></span><span class="wa-ticks">✓✓</span></div></div>
+      </div>
+      <div class="wa-actions">
+        <button class="btn btn-copy" id="rt-btnCopy" onclick="rtCopiar()">📋 Copiar mensaje</button>
+        <button class="btn btn-nuevo" onclick="rtNuevo()">🧹 Limpiar y nuevo hallazgo</button>
+      </div>
+    </div>
+    <div class="pnl" id="rt-pnl-db">
+      <div class="db-wrap">
+        <div class="db-bar"><button class="btn btn-exp" onclick="rtExportExcel()">📥 Exportar Excel</button><button class="btn btn-del2" onclick="rtLimpiarDB()">🗑 Limpiar todo</button><div class="db-total" id="rt-dbTotal">0 registros</div></div>
+        <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Línea</th><th>Máquina</th><th>Descripción</th><th>Impide</th><th>Mantenimiento</th><th>SAP</th><th>Orden SAP</th><th>Técnico</th><th></th></tr></thead><tbody id="rt-dbBody"></tbody></table></div>
+        <div class="empty" id="rt-emptyMsg"><div class="ei">📭</div><p>Sin hallazgos registrados.<br>Ve a <b>Nuevo Hallazgo</b> para comenzar.</p></div>
+      </div>
+    </div>
+    <div class="lb" id="rt-lb" onclick="rtCloseLB()"><button class="lb-x">✕</button><img id="rt-lbImg" src="" alt=""></div>
+    <div class="cc-overlay" id="rt-ccOverlay"><div class="cc-ico">✅</div><div class="cc-txt">¡Mensaje copiado!</div><div class="cc-sub">Pégalo en tu grupo de WhatsApp</div></div>
+    <div class="rt-toast" id="rt-toast"></div>
+  </div>
+
+</div><!-- /modules -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+// ╔═══════════════════════════════════════════════════╗
+// ║  CONFIGURA AQUÍ TU URL DE APPS SCRIPT             ║
+// ║  (una sola URL — el script detecta el tipo)       ║
+// ╚═══════════════════════════════════════════════════╝
+const SHEETS_URL = 'TU_URL_DE_APPS_SCRIPT_AQUI';
+// ═══════════════════════════════════════════════════════
+
+// ── LAUNCHER ──
+function abrirModulo(id){
+  document.getElementById('launcher').style.display='none';
+  document.getElementById('modules').style.display='block';
+  document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+  document.getElementById('mod-'+id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='correctivo') rfInit();
+  if(id==='paro') pInit();
+  if(id==='preventivo') rtInit();
+}
+function volverLauncher(){
+  document.getElementById('modules').style.display='none';
+  document.getElementById('launcher').style.display='flex';
+  window.scrollTo(0,0);
+}
+
+// ═══════════════════════════════════════════════════════
+// ══ MÓDULO A: REPORTE DE FALLA (CORRECTIVO) ══
+// ═══════════════════════════════════════════════════════
+const RF_DB_KEY='eu_rf_v1';
+const RF_MQ={
+  L1:['Troqueladora 1','Troqueladora 2','Troqueladora 3','Transportador L1'],
+  L2:['Cizalla','Soldadora','Barnizadora','Horno','Acuelladora','Cerradora','Hermeticidad','Codificadora'],
+  L3:['Troqueladora 1','Troqueladora 2','Troqueladora 3','Transportador L3'],
+  L4:['Troqueladora 1','Troqueladora 2','Troqueladora 3','Transportador L4'],
+  L7:['Cizalla','Soldadora','Barnizadora','Horno','Acuelladora','Cerradora','Hermeticidad','Codificadora'],
+  L8:['Cizalla','Soldadora','Barnizadora','Horno','Acuelladora','Cerradora','Hermeticidad','Codificadora'],
+  PAL:['Paletizador L1','Paletizador L3','Paletizador L4','Paletizador L7y2','Paletizador L8'],
+  SRV:['Compresor','HVAC','Subestación','Red neumática','Calderas'],
+};
+let RF={lineaK:'',lineaLabel:'',maq:'',tipoFalla:'',prioridad:'',estadoFinal:'',firmaTec:false,firmaUsr:false};
+let rf_p=null;
+
+function rfHoy(){const d=new Date();return d.getFullYear()+'-'+rfZp(d.getMonth()+1)+'-'+rfZp(d.getDate());}
+function rfZp(n){return String(n).padStart(2,'0');}
+function rfPad4(n){return String(n).padStart(4,'0');}
+function rfLoadDB(){try{return JSON.parse(localStorage.getItem(RF_DB_KEY))||[];}catch{return[];}}
+function rfSaveDB(d){localStorage.setItem(RF_DB_KEY,JSON.stringify(d));}
+function rfNextNum(){const db=rfLoadDB();return db.length?Math.max(...db.map(r=>r.num))+1:1;}
+function rfUpdBadge(){const el=document.getElementById('rf-foliobadge');if(el)el.textContent='RF-'+rfPad4(rfNextNum());}
+function rfToast(msg,ms=2600){const t=document.getElementById('rf-toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),ms);}
+function rfTimeMins(t){if(!t||!t.includes(':'))return null;const[h,m]=t.split(':').map(Number);if(isNaN(h)||isNaN(m))return null;return h*60+m;}
+function rfFmtMins(m){if(m==null||isNaN(m))return '—';const h=Math.floor(m/60),min=m%60;return(h>0?h+'h ':'')+min+'min';}
+
+function rfInit(){
+  rfUpdBadge();
+  const fd=document.getElementById('rf-fechaFalla');if(fd&&!fd.value)fd.value=rfHoy();
+}
+function rfGoTab(btn,id){
+  document.querySelectorAll('#mod-correctivo .nb').forEach(b=>b.classList.remove('act'));
+  document.querySelectorAll('#mod-correctivo .panel').forEach(p=>p.classList.remove('act'));
+  btn.classList.add('act');
+  document.getElementById('rf-panel-'+id).classList.add('act');
+  if(id==='hist') rfRenderHist();
+}
+function rfSelLinea(el,k,label){
+  RF.lineaK=k;RF.lineaLabel=label;RF.maq='';
+  document.querySelectorAll('#rf-chips-linea .chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  const sub=document.getElementById('rf-chips-maq');
+  sub.innerHTML=(RF_MQ[k]||[]).map(m=>`<div class="chip" onclick="rfSelMaq(this,'${m}')">${m}</div>`).join('');
+  document.getElementById('rf-maq-wrap').style.display='block';
+  document.getElementById('rf-equipo-wrap').style.display='none';
+  document.getElementById('rf-nombreEquipo').value='';
+  rfCalcMtbfAuto();rfChkSec1();
+}
+function rfSelMaq(el,maq){
+  RF.maq=maq;
+  document.querySelectorAll('#rf-chips-maq .chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  const equiInput=document.getElementById('rf-nombreEquipo');
+  equiInput.value=maq;
+  document.getElementById('rf-equipo-wrap').style.display='block';
+  rfCalcMtbfAuto();rfChkSec1();
+}
+function rfSelChip(el,campo,valor,cls){
+  RF[campo]=valor;
+  const grupo=el.parentElement;
+  grupo.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel','sel-red','sel-amber','sel-blue','sel-green','sel-purple'));
+  el.classList.add(cls||'sel');
+  if(campo==='tipoFalla')rfChkSec4();
+  if(campo==='estadoFinal')rfChkSec5();
+}
+function rfSelPrior(el,val,cls){
+  RF.prioridad=val;
+  document.querySelectorAll('#mod-correctivo .prior-chips .chip').forEach(c=>c.classList.remove('sel','sel-red','sel-amber','sel-blue','sel-green'));
+  el.classList.add(cls);rfChkSec2();
+}
+function rfCalcTiempos(){
+  const hFalla=document.getElementById('rf-hFalla').value;
+  const hIni=document.getElementById('rf-hInicioInt').value;
+  const hFin=document.getElementById('rf-hFinInt').value;
+  const mFalla=rfTimeMins(hFalla),mIni=rfTimeMins(hIni),mFin=rfTimeMins(hFin);
+  let downtime=null,mttr=null;
+  if(mFalla!==null&&mFin!==null){downtime=mFin-mFalla;if(downtime<0)downtime+=1440;if(downtime>1440)downtime=null;}
+  if(mIni!==null&&mFin!==null){mttr=mFin-mIni;if(mttr<0)mttr+=1440;if(mttr>1440)mttr=null;}
+  document.getElementById('rf-kDowntime').textContent=downtime!==null?rfFmtMins(downtime):'—';
+  document.getElementById('rf-kMttr').textContent=mttr!==null?rfFmtMins(mttr):'—';
+  window._rf_downtime=downtime;window._rf_mttr=mttr;
+  rfChkSec3();
+}
+function rfCalcMtbfAuto(){
+  const el=document.getElementById('rf-kMtbf'),src=document.getElementById('rf-kMtbfSrc');
+  if(!RF.lineaK||!RF.maq){el.textContent='— selecciona equipo';src.textContent='MTBF · desde historial';window._rf_mtbf=null;return;}
+  const db=rfLoadDB();
+  const same=db.filter(r=>r.lineaK===RF.lineaK&&r.maq===RF.maq).sort((a,b)=>b.num-a.num);
+  if(!same.length){el.textContent='Primer registro';src.textContent='MTBF — sin historial previo de este equipo';window._rf_mtbf=null;return;}
+  const last=same[0];const ahora=new Date();
+  const ultima=new Date((last.fecha||rfHoy())+'T'+(last.hFinInt||'00:00'));
+  let diffH=Math.round((ahora-ultima)/3600000);
+  if(diffH<0||diffH>8760)diffH=null;
+  if(diffH!==null){const d=Math.floor(diffH/24),h=diffH%24;el.textContent=(d>0?d+'d ':'')+h+'h';src.textContent='MTBF · última falla: RF-'+rfPad4(last.num)+' ('+diffH+'h atrás)';window._rf_mtbf=diffH;}
+  else{el.textContent='N/D';src.textContent='MTBF — datos insuficientes';window._rf_mtbf=null;}
+}
+function rfChkSec1(){const ok=!!(RF.lineaK&&RF.maq);document.getElementById('rf-s1').classList.toggle('done',ok);}
+function rfChkSec2(){const ok=!!(document.getElementById('rf-sintoma').value.trim()&&RF.prioridad);document.getElementById('rf-s2').classList.toggle('done',ok);}
+function rfChkSec3(){const ok=!!(document.getElementById('rf-hFalla').value&&document.getElementById('rf-hFinInt').value);document.getElementById('rf-s3').classList.toggle('done',ok);}
+function rfChkSec4(){const ok=!!(document.getElementById('rf-causaRaiz').value.trim()&&document.getElementById('rf-trabajoRealizado').value.trim());document.getElementById('rf-s4').classList.toggle('done',ok);}
+function rfChkSec5(){const ok=!!(document.getElementById('rf-tecnico').value&&RF.estadoFinal);document.getElementById('rf-s5').classList.toggle('done',ok);}
+
+function rfGenerar(){
+  const linea=RF.lineaLabel,maq=RF.maq;
+  const equipo=document.getElementById('rf-nombreEquipo').value.trim()||maq;
+  const sintoma=document.getElementById('rf-sintoma').value.trim();
+  const prior=RF.prioridad;
+  const report=document.getElementById('rf-reportante').value;
+  const fecha=document.getElementById('rf-fechaFalla').value;
+  const hFalla=document.getElementById('rf-hFalla').value;
+  const hIni=document.getElementById('rf-hInicioInt').value;
+  const hFin=document.getElementById('rf-hFinInt').value;
+  const causaR=document.getElementById('rf-causaRaiz').value.trim();
+  const trabajo=document.getElementById('rf-trabajoRealizado').value.trim();
+  const refacc=document.getElementById('rf-refacciones').value.trim();
+  const estado=RF.estadoFinal;
+  const tec=document.getElementById('rf-tecnico').value;
+  const obs=document.getElementById('rf-observaciones').value.trim();
+  if(!RF.lineaK||!RF.maq){rfToast('⚠️ Selecciona línea y máquina');return;}
+  if(!sintoma){rfToast('⚠️ Describe el síntoma de la falla');return;}
+  if(!prior){rfToast('⚠️ Selecciona la prioridad');return;}
+  if(!hFalla||!hFin){rfToast('⚠️ Ingresa hora de falla y hora de fin');return;}
+  if(!causaR||!trabajo){rfToast('⚠️ Completa causa raíz y trabajo realizado');return;}
+  if(!tec){rfToast('⚠️ Selecciona el técnico responsable');return;}
+  const num=rfNextNum(),folio='RF-'+rfPad4(num);
+  const fechaFmt=fecha?fecha.split('-').reverse().join('/'):'—';
+  const down=window._rf_downtime!=null?rfFmtMins(window._rf_downtime):'—';
+  const mttr=window._rf_mttr!=null?rfFmtMins(window._rf_mttr):'—';
+  const mtbf=window._rf_mtbf!=null?(Math.floor(window._rf_mtbf/24)>0?Math.floor(window._rf_mtbf/24)+'d ':'')+(window._rf_mtbf%24)+'h':'N/D';
+  const msg=`⚡ FALLA ${folio} · ${fechaFmt}\n━━━━━━━━━━━━━━━━━━━━━━\n📍 ${linea} · ${maq}\n🏷️ ${equipo}\n🚨 Prioridad: ${prior}\n👤 Reportó: ${report||'—'}\n\n⏱️ TIEMPOS\n• Hora de falla:         ${hFalla||'—'}\n• Inicio intervención:   ${hIni||'—'}\n• Fin / vuelta marcha:   ${hFin||'—'}\n\n📊 INDICADORES\n• Downtime:  ${down}\n• MTTR:      ${mttr}\n• MTBF:      ${mtbf}\n\n🔍 SÍNTOMA:\n${sintoma}\n\n🔎 CAUSA RAÍZ:\n${causaR}\n\n🛠️ TRABAJO REALIZADO:\n${trabajo}${refacc?'\n\n📦 REFACCIONES:\n'+refacc:''}\n\n🏁 Estado final: ${estado||'—'}${obs?'\n\n💡 RECOMENDACIONES:\n'+obs:''}\n👷 Técnico: ${tec}\n━━━━━━━━━━━━━━━━━━━━━━\nEnvases Universales · ${folio}`.replace(/\n{3,}/g,'\n\n').trim();
+  rf_p={num,folio,fecha,fechaFmt,linea,lineaK:RF.lineaK,maq,equipo,idActivo:'',marca:'',modelo:'',prior,sintoma,reportante:report,hFalla,hIni,hFin,downtime:window._rf_downtime,mttr:window._rf_mttr,mtbf:window._rf_mtbf,downStr:down,mttrStr:mttr,mtbfStr:mtbf,tipoFalla:RF.tipoFalla,causaR,trabajo,refacc,estado,tec,obs,firmaTec:RF.firmaTec,firmaUsr:RF.firmaUsr,msg};
+  document.getElementById('rf-msgPre').textContent=msg;
+  const bc=document.getElementById('rf-btnCopy');bc.textContent='📋 Copiar al portapapeles';bc.classList.remove('done');
+  document.getElementById('rf-confirmBox').classList.remove('on');
+  document.getElementById('rf-postBtns').classList.remove('on');
+  const r=document.getElementById('rf-result');r.classList.add('on');
+  setTimeout(()=>r.scrollIntoView({behavior:'smooth',block:'start'}),60);
+}
+function rfCopiar(){
+  if(!rf_p)return;
+  const ok=()=>{document.getElementById('rf-btnCopy').textContent='✅ ¡Copiado!';document.getElementById('rf-btnCopy').classList.add('done');document.getElementById('rf-confirmBox').classList.add('on');document.getElementById('rf-postBtns').classList.add('on');document.getElementById('rf-postBtns').scrollIntoView({behavior:'smooth',block:'nearest'});rfToast('📋 Copiado — pégalo donde necesites',2200);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(rf_p.msg).then(ok).catch(()=>rfFbCopy(rf_p.msg,ok));
+  else rfFbCopy(rf_p.msg,ok);
+}
+function rfFbCopy(txt,cb){try{const ta=document.createElement('textarea');ta.value=txt;ta.style.cssText='position:fixed;opacity:0;top:0;left:0;pointer-events:none;';document.body.appendChild(ta);ta.focus();ta.select();ta.setSelectionRange(0,99999);if(document.execCommand('copy'))cb();else rfToast('⚠️ Copia el texto manualmente',3000);document.body.removeChild(ta);}catch(e){rfToast('⚠️ Copia el texto manualmente',3000);}}
+function rfGuardar(){
+  if(!rf_p){rfToast('Genera el reporte primero');return;}
+  const db=rfLoadDB();
+  if(db.find(r=>r.num===rf_p.num)){rfToast('Ya registrado');rfLimpiar();return;}
+  db.push(rf_p);rfSaveDB(db);rfUpdBadge();
+  rfEnviarSheets(rf_p);rfExportExcelAuto(rf_p);
+  rfToast('✅ Guardado · Excel descargado',3000);rf_p=null;setTimeout(rfLimpiar,400);
+}
+function rfDescartar(){if(!confirm('¿Descartar sin guardar?'))return;rf_p=null;rfLimpiar();}
+function rfLimpiar(){
+  document.getElementById('rf-result').classList.remove('on');
+  document.querySelectorAll('#mod-correctivo .chip').forEach(c=>c.classList.remove('sel','sel-red','sel-amber','sel-blue','sel-green','sel-purple'));
+  document.getElementById('rf-chips-maq').innerHTML='';
+  document.getElementById('rf-maq-wrap').style.display='none';
+  document.getElementById('rf-equipo-wrap').style.display='none';
+  ['rf-nombreEquipo','rf-sintoma','rf-causaRaiz','rf-trabajoRealizado','rf-refacciones','rf-observaciones'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['rf-hFalla','rf-hInicioInt','rf-hFinInt'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('rf-reportante').value='';document.getElementById('rf-tecnico').value='';
+  ['rf-kDowntime','rf-kMttr'].forEach(id=>document.getElementById(id).textContent='—');
+  document.getElementById('rf-kMtbf').textContent='— selecciona equipo';
+  document.getElementById('rf-kMtbfSrc').textContent='MTBF · tiempo desde la última falla registrada de este equipo';
+  ['rf-s1','rf-s2','rf-s3','rf-s4','rf-s5'].forEach(id=>document.getElementById(id).classList.remove('done'));
+  document.getElementById('rf-fechaFalla').value=rfHoy();
+  RF={lineaK:'',lineaLabel:'',maq:'',tipoFalla:'',prioridad:'',estadoFinal:'',firmaTec:false,firmaUsr:false};
+  window._rf_downtime=null;window._rf_mttr=null;window._rf_mtbf=null;rfUpdBadge();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function rfRenderHist(){
+  const db=rfLoadDB().sort((a,b)=>b.num-a.num);
+  document.getElementById('rf-nReg').textContent=db.length+' registros';
+  const body=document.getElementById('rf-tblBody'),empty=document.getElementById('rf-emptyMsg');
+  body.innerHTML='';
+  const hkpi=document.getElementById('rf-hkpiRow');
+  if(!db.length){empty.style.display='block';hkpi.innerHTML='';return;}
+  empty.style.display='none';
+  const mttrArr=db.filter(r=>r.mttr!=null).map(r=>r.mttr);
+  const downArr=db.filter(r=>r.downtime!=null).map(r=>r.downtime);
+  const mtbfArr=db.filter(r=>r.mtbf!=null).map(r=>r.mtbf);
+  const avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:null;
+  const aMttr=avg(mttrArr),aDown=avg(downArr),aMtbf=avg(mtbfArr);
+  hkpi.innerHTML=`<div class="hkpi tot"><div class="v">${db.length}</div><div class="l">Total fallas</div></div><div class="hkpi down"><div class="v">${aDown!=null?rfFmtMins(Math.round(aDown)):'—'}</div><div class="l">Downtime prom.</div></div><div class="hkpi mttr"><div class="v">${aMttr!=null?rfFmtMins(Math.round(aMttr)):'—'}</div><div class="l">MTTR prom.</div></div><div class="hkpi mtbf"><div class="v">${aMtbf!=null?(Math.floor(aMtbf/24)>0?Math.floor(aMtbf/24)+'d ':'')+(Math.round(aMtbf)%24)+'h':'—'}</div><div class="l">MTBF prom.</div></div>`;
+  const priorColor={URGENTE:'#f87171',ALTA:'#fdba74',MEDIA:'#fde68a',BAJA:'#86efac'};
+  db.forEach(r=>{const tr=document.createElement('tr');const pc=priorColor[r.prior]||'#9ca3af';tr.innerHTML=`<td class="folio">${r.folio}</td><td style="font-size:.7rem;">${r.fechaFmt||'—'}</td><td>${r.linea||'—'}</td><td style="font-size:.7rem;">${r.maq||'—'}</td><td style="font-size:.69rem;color:${pc};">${r.prior||'—'}</td><td style="font-family:'DM Mono',monospace;color:#f59e0b;">${r.downStr||'—'}</td><td style="font-family:'DM Mono',monospace;color:#ef4444;">${r.mttrStr||'—'}</td><td style="font-family:'DM Mono',monospace;color:#22c55e;">${r.mtbfStr||'—'}</td><td style="font-size:.69rem;">${(r.estado||'—').replace('✅ ','').replace('⚠️ ','').replace('🔴 ','').replace('👁️ ','').split('—')[0].trim()}</td><td><button class="xbtn" onclick="rfBorrarReg(${r.num})">🗑</button></td>`;body.appendChild(tr);});
+}
+function rfBorrarReg(num){if(!confirm('¿Eliminar RF-'+rfPad4(num)+'?'))return;rfSaveDB(rfLoadDB().filter(r=>r.num!==num));rfRenderHist();rfUpdBadge();rfToast('Eliminado');}
+function rfBorrarTodo(){if(!confirm('¿Borrar TODOS los registros?'))return;localStorage.removeItem(RF_DB_KEY);rfRenderHist();rfUpdBadge();rfToast('Base limpiada');}
+function rfExportExcelAuto(rec){rfExportExcel(rec,true);}
+function rfExportExcel(auto,isAuto){
+  const db=rfLoadDB().sort((a,b)=>a.num-b.num);
+  if(!db.length){rfToast('Sin registros');return;}
+  const H=['Folio','Fecha','Línea','Máquina','Equipo','Prioridad','Síntoma','Reportó','H. Falla','H. Inicio Int.','H. Fin','Downtime (min)','MTTR (min)','MTBF (h)','Tipo Falla','Causa Raíz','Trabajo Realizado','Refacciones','Estado Final','Técnico','Observaciones','Timestamp'];
+  const rows=db.map(r=>[r.folio,r.fechaFmt||'',r.linea||'',r.maq||'',r.equipo||'',r.prior||'',r.sintoma||'',r.reportante||'',r.hFalla||'',r.hIni||'',r.hFin||'',r.downtime!=null?r.downtime:'',r.mttr!=null?r.mttr:'',r.mtbf!=null?r.mtbf:'',r.tipoFalla||'',r.causaR||'',r.trabajo||'',r.refacc||'',r.estado||'',r.tec||'',r.obs||'',new Date().toISOString()]);
+  const ws=XLSX.utils.aoa_to_sheet([H,...rows]);
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,'Fallas',ws);
+  const d=new Date(),ds=d.getFullYear()+rfZp(d.getMonth()+1)+rfZp(d.getDate());
+  XLSX.writeFile(wb,isAuto&&auto?`Falla_${auto.folio}_${ds}.xlsx`:`Fallas_${ds}.xlsx`);
+  if(!isAuto)rfToast('📥 Excel descargado');
+}
+function rfEnviarSheets(rec){
+  if(!SHEETS_URL||SHEETS_URL.includes('TU_URL'))return;
+  const p={tipo:'RF',folio:rec.folio,fecha:rec.fechaFmt||'',linea:rec.linea||'',maquina:rec.maq||'',equipo:rec.equipo||'',prioridad:rec.prior||'',sintoma:rec.sintoma||'',reportante:rec.reportante||'',hFalla:rec.hFalla||'',hInicioInt:rec.hIni||'',hFin:rec.hFin||'',downtimeMins:rec.downtime!=null?rec.downtime:'',mttrMins:rec.mttr!=null?rec.mttr:'',mtbfH:rec.mtbf!=null?rec.mtbf:'',tipoFalla:rec.tipoFalla||'',causaRaiz:rec.causaR||'',trabajoRealizado:rec.trabajo||'',refacciones:rec.refacc||'',estadoFinal:rec.estado||'',tecnico:rec.tec||'',observaciones:rec.obs||'',timestamp:new Date().toISOString()};
+  fetch(SHEETS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(p)}).catch(()=>{});
+  try{const qs=new URLSearchParams(Object.fromEntries(Object.entries(p).map(([k,v])=>[k,String(v).slice(0,250)])));fetch(SHEETS_URL+'?'+qs,{method:'GET',mode:'no-cors'}).catch(()=>{});}catch(e){}
+}
+
+// ═══════════════════════════════════════════════════════
+// ══ MÓDULO B: REPORTE DE PARO ══
+// ═══════════════════════════════════════════════════════
+const P_DB_KEY='eu_paros_v3';
+const P_MQ={L1:['Troqueladora 1','Troqueladora 2','Troqueladora 3','Transportador L1'],L3:['Troqueladora 1','Troqueladora 2','Troqueladora 3','Transportador L3'],L4:['Troqueladora 1','Troqueladora 2','Troqueladora 3','Transportador L4'],L2:['Cizalla','Soldadora','Barnizadora','Horno','Transportador','Acuelladora','Cerradora','Hermeticidad','Cámara de Visión','Codificadora'],L7:['Cizalla','Soldadora','Barnizadora','Horno','Transportador','Acuelladora','Cerradora','Hermeticidad','Cámara de Visión','Codificadora'],L8:['Cizalla','Soldadora','Barnizadora','Horno','Transportador','Acuelladora','Cerradora','Hermeticidad','Cámara de Visión','Codificadora'],PAL1:['Paletizador','Robot paletizador','Flejadora','Transportador salida'],PAL3:['Paletizador','Robot paletizador','Flejadora','Transportador salida'],PAL4:['Paletizador','Robot paletizador','Flejadora','Transportador salida'],PAL72:['Paletizador','Robot paletizador','Flejadora','Transportador salida'],PAL8:['Paletizador','Robot paletizador','Flejadora','Transportador salida']};
+const P_LL={L1:'Línea 1',L2:'Línea 2',L3:'Línea 3',L4:'Línea 4',L7:'Línea 7',L8:'Línea 8',PAL1:'Paletizador L1',PAL3:'Paletizador L3',PAL4:'Paletizador L4',PAL72:'Paletizador L7y2',PAL8:'Paletizador L8'};
+const P_CP={'Cuadrilla A':'pa','Cuadrilla B':'pb','Cuadrilla C':'pc','Cuadrilla D':'pd'};
+let _p_pendingRec=null,_p_pendingNumStr=null,p_accN=0;
+const p_photos={ind:[],prob:[]};
+
+function pLoadDB(){try{return JSON.parse(localStorage.getItem(P_DB_KEY))||[];}catch{return[];}}
+function pSaveDB(d){localStorage.setItem(P_DB_KEY,JSON.stringify(d));}
+function pNextNum(){const db=pLoadDB();return db.length?Math.max(...db.map(r=>r.num))+1:1;}
+function pUpdateBadge(){document.getElementById('p-nextId').textContent=String(pNextNum()).padStart(4,'0');}
+function pToast(msg,ms=2700){const t=document.getElementById('p-toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),ms);}
+
+function pInit(){
+  const d=new Date();
+  document.getElementById('p-fecha').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  pUpdateBadge();
+  if(!document.querySelector('#p-accList .acc-item'))pAddAcc();
+}
+function pGoTab(btn,tab){
+  document.querySelectorAll('#mod-paro .nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#mod-paro .panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');document.getElementById('p-panel-'+tab).classList.add('active');
+  if(tab==='db')pRenderDB();
+}
+function pActualizarMaquinas(){
+  const k=document.getElementById('p-linea').value;const sel=document.getElementById('p-maquina');
+  sel.innerHTML='';
+  if(!k){sel.innerHTML='<option value="">— Selecciona línea primero —</option>';return;}
+  sel.innerHTML='<option value="">— Selecciona máquina —</option>';
+  (P_MQ[k]||[]).forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;sel.appendChild(o);});
+}
+function pCalcTM(){
+  const ini=document.getElementById('p-hIni').value,mar=document.getElementById('p-hMarcha').value;
+  const el=document.getElementById('p-tMuerto');
+  if(!ini||!mar){el.textContent='— ingresa hora de inicio y puesta en marcha —';el.className='tmuerto';return;}
+  const[ih,im]=ini.split(':').map(Number),[mh,mm]=mar.split(':').map(Number);
+  let mins=(mh*60+mm)-(ih*60+im);if(mins<0)mins+=1440;
+  const h=Math.floor(mins/60),m=mins%60;
+  el.textContent=(h>0?h+'h ':'')+m+'min  ('+mins+' min)';
+  el.className=mins>=60?'tmuerto warn':'tmuerto';
+}
+function pAddAcc(){
+  p_accN++;const list=document.getElementById('p-accList');const d=document.createElement('div');
+  d.className='acc-item';d.id='p-acc-'+p_accN;
+  d.innerHTML=`<div class="af"><div class="acc-num">ACCIÓN #${p_accN}</div><textarea placeholder="Describe la acción realizada..."></textarea><div class="acc-sub"><select style="flex:1;font-size:.82rem;padding:7px 9px;background:#1f1f23;border:1px solid #2e2e35;border-radius:8px;color:#f4f4f5;"><option value="">— Técnico —</option><option>ROSALES CAMACHO EDUARDO</option><option>COELLO HERNANDEZ CARLOS EDUARDO</option><option>JIMENEZ CORDOVA JONATHAN</option><option>VELAZCO DOMINGUEZ ANGEL ALBERTO</option><option>GUERRERO RUIZ DANIEL</option><option>MARQUEZ CAZARIN JOSE ANGEL</option><option>OBESO SOTO GILDARDO ERNESTO</option><option>ALCOCER DIAZ MARIO</option><option>PEREZ VAZQUEZ LORENZO</option><option>GARCIA GARCIA MIGUEL</option><option>ABELAR LOPEZ DANIEL DOMINGO</option><option>CAMARGO CRUZ ALDO SAUL</option><option>RAMIREZ LEYVA JULIO CESAR</option><option>HERRERA FLORES JESUS DAVID</option><option>LAZCANO VELAZQUEZ EDSON MISAEL</option><option>CASTAÑEDA PATRON EDDWAR ALEXIS</option></select><input type="time" style="width:108px;background:#1f1f23;border:1px solid #2e2e35;border-radius:8px;color:#f4f4f5;padding:7px 9px;font-size:.82rem;"></div></div><button class="btn-rm" onclick="document.getElementById('p-acc-${p_accN}').remove()">✕</button>`;
+  list.appendChild(d);
+}
+function pLoadPhotos(inp,ppId,bdId,key){
+  p_photos[key]=[];const pp=document.getElementById(ppId),bd=document.getElementById(bdId);pp.innerHTML='';
+  [...inp.files].forEach(f=>{const url=URL.createObjectURL(f);p_photos[key].push(url);const img=document.createElement('img');img.src=url;img.onclick=()=>pOpenLB(url);pp.appendChild(img);});
+  const n=inp.files.length;bd.innerHTML=n>0?`<div class="pbadge">📎 ${n} foto${n>1?'s':''} lista${n>1?'s':''}</div>`:'';
+}
+function pOpenLB(src){document.getElementById('p-lbImg').src=src;document.getElementById('p-lb').classList.add('on');}
+function pCloseLB(){document.getElementById('p-lb').classList.remove('on');}
+function pGenerarReporte(){
+  const cuad=document.getElementById('p-cuadrilla').value;const fecha=document.getElementById('p-fecha').value;const turno=document.getElementById('p-turno').value;const rep=document.getElementById('p-reporta').value;const lineaK=document.getElementById('p-linea').value;const maq=document.getElementById('p-maquina').value;const hIni=document.getElementById('p-hIni').value;const hFin=document.getElementById('p-hFin').value;const hMar=document.getElementById('p-hMarcha').value;const prob=document.getElementById('p-problema').value.trim();
+  if(!cuad||!lineaK||!maq||!hIni||!prob){pToast('⚠️ Completa los campos obligatorios');return;}
+  const accItems=document.querySelectorAll('#p-accList .acc-item'),acciones=[];
+  accItems.forEach((item,i)=>{const ta=item.querySelector('textarea');const resp=item.querySelector('select');const hora=item.querySelector('input[type=time]');const txt=ta?.value.trim();if(txt)acciones.push({n:i+1,txt,resp:resp?.value.trim()||'',hora:hora?.value||''});});
+  const tmEl=document.getElementById('p-tMuerto').textContent;const tm=tmEl.includes('—')?'—':tmEl.split('  ')[0];
+  let tmMins=0;if(hIni&&hMar){const[ih,im]=hIni.split(':').map(Number);const[mh,mm]=hMar.split(':').map(Number);tmMins=(mh*60+mm)-(ih*60+im);if(tmMins<0)tmMins+=1440;}
+  const num=pNextNum(),numStr=String(num).padStart(4,'0'),lineaLabel=P_LL[lineaK]||lineaK,fechaFmt=fecha?fecha.split('-').reverse().join('/'):'—';
+  _p_pendingRec={num,cuad,fecha,turno,lineaK,lineaLabel,maq,hIni,hFin,hMar,tm,tmMins,prob,acciones,rep,fotosInd:p_photos.ind.length,fotosProb:p_photos.prob.length};
+  _p_pendingNumStr=numStr;
+  let acStr='';acciones.forEach(a=>{acStr+=`  ${a.n}. ${a.txt}`;if(a.resp)acStr+=` [${a.resp}]`;if(a.hora)acStr+=` (${a.hora})`;acStr+='\n';});if(!acStr)acStr='  — Sin acciones registradas —\n';
+  const totalF=p_photos.ind.length+p_photos.prob.length;const fotosLine=totalF>0?`\n📎 FOTOS ADJUNTAS: ${totalF} imagen${totalF>1?'es':''}${p_photos.ind.length>0?`\n  • Indicadores: ${p_photos.ind.length}`:''}${p_photos.prob.length>0?`\n  • Problema: ${p_photos.prob.length}`:''}`:'\n(Sin fotos adjuntas)';
+  const msg=`⚠️ REPORTE DE PARO #${numStr}\n━━━━━━━━━━━━━━━━━━━━━━━━\n🏭 Línea: ${lineaLabel}\n⚙️ Máquina: ${maq}\n📅 Fecha: ${fechaFmt}\n👥 ${cuad} · ${turno||'—'}\n👷 Técnico: ${rep||'—'}\n\n⏱️ TIEMPOS\n• Inicio del paro:      ${hIni||'—'}\n• Fin de intervención:  ${hFin||'—'}\n• Puesta en marcha:     ${hMar||'—'}\n• ⏳ Tiempo muerto:  ${tm}\n\n📋 PROBLEMA:\n${prob}\n${fotosLine}\n\n🛠️ ACCIONES REALIZADAS:\n${acStr.trimEnd()}\n━━━━━━━━━━━━━━━━━━━━━━━━\nEnvases Universales · Paro #${numStr}`;
+  document.getElementById('p-rptMsg').textContent=msg;
+  const btnCopiar=document.getElementById('p-btnCopiar');btnCopiar.classList.remove('copiado');btnCopiar.textContent='📋 Copiar al portapapeles';
+  document.getElementById('p-confirmPanel').classList.remove('on');document.getElementById('p-btnRegistrar').classList.remove('on');
+  const wrap=document.getElementById('p-rptWrap');wrap.classList.add('on');wrap.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function pCopiarReporte(){
+  const msg=document.getElementById('p-rptMsg').textContent;if(!msg)return;
+  const exito=()=>{const btn=document.getElementById('p-btnCopiar');btn.textContent='✅ ¡Copiado!';btn.classList.add('copiado');document.getElementById('p-confirmPanel').classList.add('on');document.getElementById('p-btnRegistrar').classList.add('on');document.getElementById('p-btnRegistrar').scrollIntoView({behavior:'smooth',block:'nearest'});pToast('📋 Texto copiado en el portapapeles',2500);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(msg).then(exito).catch(()=>pFallbackCopy(msg,exito));
+  else pFallbackCopy(msg,exito);
+}
+function pFallbackCopy(text,onSuccess){try{const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;top:0;left:0;opacity:0;pointer-events:none;';document.body.appendChild(ta);ta.focus();ta.select();ta.setSelectionRange(0,99999);const ok=document.execCommand('copy');document.body.removeChild(ta);if(ok)onSuccess();else pToast('⚠️ No se pudo copiar automáticamente',3500);}catch(e){pToast('⚠️ No se pudo copiar automáticamente',3500);}}
+function pRegistrarYLimpiar(){
+  if(!_p_pendingRec){pToast('⚠️ Genera el reporte primero');return;}
+  const db=pLoadDB();if(db.find(r=>r.num===_p_pendingRec.num)){pToast('ℹ️ Este reporte ya fue registrado');pLimpiarFormulario();return;}
+  db.push(_p_pendingRec);pSaveDB(db);pUpdateBadge();
+  pEnviarASheets(_p_pendingRec);pExportExcel(_p_pendingRec,_p_pendingNumStr);
+  pToast(`✅ Paro #${_p_pendingNumStr} registrado`,3000);_p_pendingRec=null;_p_pendingNumStr=null;
+  setTimeout(pLimpiarFormulario,400);
+}
+function pLimpiarFormulario(){
+  document.getElementById('p-rptWrap').classList.remove('on');
+  ['p-cuadrilla','p-turno','p-linea','p-reporta'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('p-problema').value='';
+  ['p-hIni','p-hFin','p-hMarcha'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('p-maquina').innerHTML='<option value="">— Selecciona línea primero —</option>';
+  document.getElementById('p-tMuerto').textContent='— ingresa hora de inicio y puesta en marcha —';
+  document.getElementById('p-tMuerto').className='tmuerto';
+  document.getElementById('p-accList').innerHTML='';
+  ['p-ppInd','p-ppProb'].forEach(id=>document.getElementById(id).innerHTML='');
+  ['p-bdInd','p-bdProb'].forEach(id=>document.getElementById(id).innerHTML='');
+  ['p-fInd','p-fProb'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  p_photos.ind=[];p_photos.prob=[];p_accN=0;pAddAcc();
+  const d=new Date();document.getElementById('p-fecha').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  pUpdateBadge();window.scrollTo({top:0,behavior:'smooth'});
+}
+function pRenderDB(){
+  const db=pLoadDB().sort((a,b)=>b.num-a.num);const body=document.getElementById('p-dbBody'),empty=document.getElementById('p-emptyMsg');
+  document.getElementById('p-dbTotal').textContent=db.length+' registro'+(db.length!==1?'s':'');body.innerHTML='';
+  if(!db.length){empty.style.display='block';return;}empty.style.display='none';
+  db.forEach(r=>{const tr=document.createElement('tr');const fd=r.fecha?r.fecha.split('-').reverse().join('/'):'—';const pill=P_CP[r.cuad]||'pb';const turnoS=(r.turno||'').includes('1')?'T1':'T2';const probC=r.prob.length>50?r.prob.slice(0,50)+'…':r.prob;tr.innerHTML=`<td class="idc">#${String(r.num).padStart(4,'0')}</td><td>${fd}</td><td><span class="pill ${pill}">${(r.cuad||'').replace('Cuadrilla ','Cuad.')}</span></td><td>${turnoS}</td><td>${r.lineaLabel||'—'}</td><td style="font-size:.72rem;">${r.maq||'—'}</td><td style="font-family:'Barlow',sans-serif;font-size:.82rem;${r.tmMins>=60?'color:#ef4444':''}">${r.tm||'—'}</td><td style="max-width:170px;font-size:.72rem;">${probC}</td><td>${r.hIni||'—'}</td><td>${r.hMar||'—'}</td><td style="font-size:.72rem;">${r.rep||'—'}</td><td><button class="del-btn" onclick="pDelRec(${r.num})">🗑</button></td>`;body.appendChild(tr);});
+}
+function pDelRec(num){if(!confirm(`¿Eliminar paro #${String(num).padStart(4,'0')}?`))return;pSaveDB(pLoadDB().filter(r=>r.num!==num));pRenderDB();pUpdateBadge();pToast('Registro eliminado');}
+function pLimpiarDB(){if(!confirm('¿Borrar TODA la base de datos?'))return;localStorage.removeItem(P_DB_KEY);pRenderDB();pUpdateBadge();pToast('Base limpiada');}
+function pExportExcel(autoRec,autoNumStr){
+  const isAuto=!!autoRec;const db=pLoadDB().sort((a,b)=>a.num-b.num);if(!db.length){pToast('Sin datos para exportar');return;}
+  const hdr=['#','Clave','Fecha','Cuadrilla','Turno','Línea','Máquina','H. Inicio','H. Fin Acciones','H. Puesta Marcha','Tiempo Muerto','Mins Muertos','Problema','Acciones','Técnico'];
+  const rows=db.map(r=>[r.num,'#'+String(r.num).padStart(4,'0'),r.fecha?r.fecha.split('-').reverse().join('/'):'',r.cuad||'',r.turno||'',r.lineaLabel||r.lineaK||'',r.maq||'',r.hIni||'',r.hFin||'',r.hMar||'',r.tm||'',r.tmMins||0,r.prob||'',(r.acciones||[]).map(a=>`${a.n}. ${a.txt}${a.resp?' ['+a.resp+']':''}${a.hora?' ('+a.hora+')':''}`).join(' | '),r.rep||'']);
+  const ws=XLSX.utils.aoa_to_sheet([hdr,...rows]);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,'Paros',ws);
+  const d=new Date(),ds=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  XLSX.writeFile(wb,isAuto?`Paro_#${autoNumStr}_${ds}.xlsx`:`Paros_Completo_${ds}.xlsx`);
+  if(!isAuto)pToast('📥 Excel descargado');
+}
+function pEnviarASheets(rec){
+  if(!SHEETS_URL||SHEETS_URL.includes('TU_URL'))return;
+  const payload={tipo:'PARO',num:rec.num,clave:'#'+String(rec.num).padStart(4,'0'),fecha:rec.fecha?rec.fecha.split('-').reverse().join('/'):'',cuadrilla:rec.cuad||'',turno:rec.turno||'',linea:rec.lineaLabel||rec.lineaK||'',maquina:rec.maq||'',hInicio:rec.hIni||'',hFinAcciones:rec.hFin||'',hPuestaMarcha:rec.hMar||'',tiempoMuerto:rec.tm||'',minutosMuertos:rec.tmMins||0,problema:rec.prob||'',acciones:(rec.acciones||[]).map(a=>a.n+'. '+a.txt+(a.resp?' ['+a.resp+']':'')+(a.hora?' ('+a.hora+')':'')).join(' | '),tecnico:rec.rep||'',timestamp:new Date().toISOString()};
+  fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).catch(()=>{});
+  try{const params=new URLSearchParams(Object.fromEntries(Object.entries(payload).map(([k,v])=>[k,String(v)])));new Image().src=SHEETS_URL+'?'+params.toString();}catch(e){}
+}
+
+// ═══════════════════════════════════════════════════════
+// ══ MÓDULO C: REPARACIONES TEMPORALES ══
+// ═══════════════════════════════════════════════════════
+const RT_DB_KEY='eu_rt_v1';
+let rt_fotoURLs=[];
+
+function rtLoadDB(){try{return JSON.parse(localStorage.getItem(RT_DB_KEY))||[];}catch{return[];}}
+function rtSaveDB(d){localStorage.setItem(RT_DB_KEY,JSON.stringify(d));}
+function rtNextNum(){const db=rtLoadDB();return db.length?Math.max(...db.map(r=>r.num))+1:1;}
+function rtUpdateBadge(){document.getElementById('rt-nextId').textContent=String(rtNextNum()).padStart(4,'0');}
+function rtToast(msg,ms=2700){const t=document.getElementById('rt-toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),ms);}
+
+function rtInit(){
+  const d=new Date();document.getElementById('rt-fecha').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  rtUpdateBadge();
+  document.querySelectorAll('#mod-preventivo .tg').forEach(o=>{o.onclick=()=>{o.closest('.tg-group').querySelectorAll('.tg').forEach(x=>x.classList.remove('on'));o.classList.add('on');};});
+  document.querySelectorAll('#mod-preventivo .imp').forEach(o=>{o.onclick=()=>{document.querySelectorAll('#mod-preventivo .imp').forEach(x=>x.classList.remove('on'));o.classList.add('on');};});
+  document.querySelectorAll('#mod-preventivo .sap').forEach(o=>{o.onclick=()=>{document.querySelectorAll('#mod-preventivo .sap').forEach(x=>x.classList.remove('on'));o.classList.add('on');document.getElementById('rt-sapNumWrap').style.display=o.dataset.v==='Sí'?'block':'none';};});
+}
+function rtGoTab(btn,tab){
+  document.querySelectorAll('#mod-preventivo .nb').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('#mod-preventivo .pnl').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');document.getElementById('rt-pnl-'+tab).classList.add('on');
+  if(tab==='db')rtRenderDB();
+}
+function rtCargaFotos(inp){
+  rt_fotoURLs=[];const pp=document.getElementById('rt-fotoPreview'),bd=document.getElementById('rt-fotoBadge');pp.innerHTML='';
+  [...inp.files].forEach(f=>{const url=URL.createObjectURL(f);rt_fotoURLs.push(url);const img=document.createElement('img');img.src=url;img.onclick=()=>rtOpenLB(url);pp.appendChild(img);});
+  const n=inp.files.length;bd.innerHTML=n>0?`<div class="pbadge">📎 ${n} foto${n>1?'s':''} cargada${n>1?'s':''}</div>`:'';
+}
+function rtOpenLB(src){document.getElementById('rt-lbImg').src=src;document.getElementById('rt-lb').classList.add('on');}
+function rtCloseLB(){document.getElementById('rt-lb').classList.remove('on');}
+function rtRegistrar(){
+  const linea=document.getElementById('rt-linea').value,maq=document.getElementById('rt-maquina').value.trim(),tec=document.getElementById('rt-tecnico').value,fecha=document.getElementById('rt-fecha').value,desc=document.getElementById('rt-descripcion').value.trim();
+  const impide=document.querySelector('#mod-preventivo .imp.on')?.dataset.v||'total';
+  const mant=document.querySelector('#mod-preventivo .tg.on')?.dataset.v||'Correctivo';
+  const sapVal=document.querySelector('#mod-preventivo .sap.on')?.dataset.v||'No';
+  const sapNum=sapVal==='Sí'?(document.getElementById('rt-sapNum').value.trim()||'—'):'—';
+  const obs=document.getElementById('rt-obs').value.trim();
+  if(!linea||!maq||!desc||!fecha){rtToast('⚠️ Completa: línea, máquina, descripción y fecha');return;}
+  const num=rtNextNum(),numStr=String(num).padStart(4,'0'),fechaF=fecha.split('-').reverse().join('/');
+  const impideLabel={total:'🔴 Sí, totalmente',parcial:'🟡 Parcialmente',no:'🟢 No impide'};
+  const mantIcon={Correctivo:'🔧',Preventivo:'📅','Mejora/Modificación':'✏️'};
+  const rec={num,linea,maq,tec,fecha,desc,impide,mant,sapVal,sapNum,obs,fotos:rt_fotoURLs.length,ts:new Date().toISOString()};
+  const db=rtLoadDB();db.push(rec);rtSaveDB(db);rtUpdateBadge();
+  rtEnviarSheets(rec,numStr);
+  const msg=`🔧 *REPARACIÓN TEMPORAL #${numStr}*\n━━━━━━━━━━━━━━━━━━━━━━━\n📍 *Línea:* ${linea}\n⚙️ *Máquina:* ${maq}\n📅 *Fecha detectada:* ${fechaF}\n👷 *Detectada por:* ${tec||'—'}\n\n📋 *DESCRIPCIÓN:*\n${desc}\n\n⚠️ *¿Impide funcionamiento?*\n${impideLabel[impide]}\n\n${mantIcon[mant]} *Mantenimiento:* ${mant}\n🗂️ *Orden SAP:* ${sapVal==='Sí'?'✅ Sí — '+sapNum:'❌ No creada'}${obs?'\n\n📝 *Observaciones:*\n'+obs:''}${rt_fotoURLs.length>0?'\n\n📎 *Fotos:* '+rt_fotoURLs.length+' imagen'+(rt_fotoURLs.length>1?'es':''):''}\n━━━━━━━━━━━━━━━━━━━━━━━\n_Envases Universales · RT-${numStr}_`;
+  document.getElementById('rt-waMsg').textContent=msg;
+  const now=new Date();document.getElementById('rt-waTime').textContent=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const strip=document.getElementById('rt-waStrip'),slbl=document.getElementById('rt-waStripLbl');strip.innerHTML='';
+  if(rt_fotoURLs.length>0){slbl.style.display='block';rt_fotoURLs.forEach(u=>{const img=document.createElement('img');img.src=u;img.onclick=()=>rtOpenLB(u);strip.appendChild(img);});}else{slbl.style.display='none';}
+  document.getElementById('rt-waScreen').classList.add('on');window.scrollTo({top:0});
+  navigator.clipboard.writeText(msg).then(()=>{rtToast('✅ RT-'+numStr+' registrada y mensaje copiado');const cc=document.getElementById('rt-ccOverlay');cc.classList.add('on');setTimeout(()=>cc.classList.remove('on'),2200);}).catch(()=>{rtToast('✅ RT-'+numStr+' registrada — toca Copiar');});
+}
+function rtCopiar(){
+  const txt=document.getElementById('rt-waMsg').textContent;
+  navigator.clipboard.writeText(txt).then(()=>{const b=document.getElementById('rt-btnCopy');b.textContent='✅ ¡Copiado!';b.classList.add('done');setTimeout(()=>{b.textContent='📋 Copiar mensaje';b.classList.remove('done');},2500);const cc=document.getElementById('rt-ccOverlay');cc.classList.add('on');setTimeout(()=>cc.classList.remove('on'),2000);}).catch(()=>{const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);rtToast('✅ Copiado');});
+}
+function rtNuevo(){
+  document.getElementById('rt-waScreen').classList.remove('on');
+  ['rt-linea','rt-tecnico'].forEach(id=>document.getElementById(id).value='');
+  ['rt-maquina','rt-descripcion','rt-sapNum','rt-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('rt-fotoPreview').innerHTML='';document.getElementById('rt-fotoBadge').innerHTML='';document.getElementById('rt-fotoFile').value='';rt_fotoURLs=[];
+  document.querySelectorAll('#mod-preventivo .imp').forEach((o,i)=>o.classList.toggle('on',i===0));
+  document.querySelectorAll('#mod-preventivo .tg').forEach((o,i)=>o.classList.toggle('on',i===0));
+  document.querySelectorAll('#mod-preventivo .sap').forEach((o,i)=>o.classList.toggle('on',i===0));
+  document.getElementById('rt-sapNumWrap').style.display='block';
+  const d=new Date();document.getElementById('rt-fecha').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  rtUpdateBadge();window.scrollTo({top:0,behavior:'smooth'});
+}
+function rtRenderDB(){
+  const db=rtLoadDB().sort((a,b)=>b.num-a.num);const body=document.getElementById('rt-dbBody'),empty=document.getElementById('rt-emptyMsg');
+  document.getElementById('rt-dbTotal').textContent=db.length+' registro'+(db.length!==1?'s':'');body.innerHTML='';
+  if(!db.length){empty.style.display='block';return;}empty.style.display='none';
+  const impPill={total:'<span class="pill p-red">Sí total</span>',parcial:'<span class="pill p-amber">Parcial</span>',no:'<span class="pill p-green">No impide</span>'};
+  const mantPill={Correctivo:'<span class="pill p-red">Correctivo</span>',Preventivo:'<span class="pill p-blue">Preventivo</span>','Mejora/Modificación':'<span class="pill p-amber">Mejora/Mod.</span>'};
+  db.forEach(r=>{const tr=document.createElement('tr');const fd=r.fecha?r.fecha.split('-').reverse().join('/'):'—';const sapD=r.sapVal==='Sí'?'<span class="pill p-green">Sí</span>'+(r.sapNum!=='—'?'<br><small style="font-family:\'JetBrains Mono\',monospace;font-size:.67rem;">'+r.sapNum+'</small>':''):'<span class="pill p-red">No</span>';tr.innerHTML=`<td class="id-c">RT-${String(r.num).padStart(4,'0')}</td><td>${fd}</td><td>${r.linea||'—'}</td><td style="font-size:.73rem;">${r.maq||'—'}</td><td style="max-width:180px;font-size:.72rem;">${(r.desc||'').length>70?(r.desc).slice(0,70)+'…':r.desc}</td><td>${impPill[r.impide]||r.impide}</td><td>${mantPill[r.mant]||r.mant}</td><td>${sapD}</td><td style="font-family:'JetBrains Mono',monospace;font-size:.72rem;">${r.sapNum!=='—'?r.sapNum:''}</td><td style="font-size:.72rem;">${r.tec||'—'}</td><td><button class="del-btn" onclick="rtDelRec(${r.num})">🗑</button></td>`;body.appendChild(tr);});
+}
+function rtDelRec(num){if(!confirm('¿Eliminar RT-'+String(num).padStart(4,'0')+'?'))return;rtSaveDB(rtLoadDB().filter(r=>r.num!==num));rtRenderDB();rtUpdateBadge();rtToast('Registro eliminado');}
+function rtLimpiarDB(){if(!confirm('¿Borrar TODA la base de datos local?'))return;localStorage.removeItem(RT_DB_KEY);rtRenderDB();rtUpdateBadge();rtToast('Base limpiada');}
+function rtExportExcel(){
+  if(typeof XLSX==='undefined'){rtToast('⚠️ Exportar no disponible sin conexión');return;}
+  const db=rtLoadDB().sort((a,b)=>a.num-b.num);if(!db.length){rtToast('Sin datos para exportar');return;}
+  const hdr=['#','Clave','Fecha','Línea','Máquina','Técnico','Descripción','Impide Funcionamiento','Tipo Mantenimiento','SAP Creado','Orden SAP','Observaciones'];
+  const impL={total:'Sí totalmente',parcial:'Parcialmente',no:'No impide'};
+  const rows=db.map(r=>[r.num,'RT-'+String(r.num).padStart(4,'0'),r.fecha?r.fecha.split('-').reverse().join('/'):'',r.linea||'',r.maq||'',r.tec||'',r.desc||'',impL[r.impide]||r.impide||'',r.mant||'',r.sapVal||'',r.sapNum!=='—'?r.sapNum:'',r.obs||'']);
+  const ws=XLSX.utils.aoa_to_sheet([hdr,...rows]);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,'Reparaciones Temporales',ws);
+  const d=new Date(),ds=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  XLSX.writeFile(wb,'RT_EnvasesUniversales_'+ds+'.xlsx');rtToast('📥 Excel descargado');
+}
+function rtEnviarSheets(rec,numStr){
+  if(!SHEETS_URL||SHEETS_URL.includes('TU_URL'))return;
+  const payload={tipo:'RT',num:rec.num,clave:'RT-'+String(rec.num).padStart(4,'0'),fecha:rec.fecha?rec.fecha.split('-').reverse().join('/'):'',linea:rec.linea||'',maquina:rec.maq||'',tecnico:rec.tec||'',descripcion:rec.desc||'',impideFuncionamiento:({total:'Sí totalmente',parcial:'Parcialmente',no:'No impide'})[rec.impide]||'',tipoMantenimiento:rec.mant||'',ordenSAP:rec.sapVal||'',numeroSAP:rec.sapNum!=='—'?rec.sapNum:'',observaciones:rec.obs||'',fotos:rec.fotos||0,timestamp:rec.ts||new Date().toISOString()};
+  fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}).catch(()=>{});
+}
+</script>
+
+<!--
+================================================================
+APPS SCRIPT — Copia esto en https://script.google.com
+================================================================
+
+const SHEET_ID = 'TU_SPREADSHEET_ID_AQUI';
+
+function doPost(e) {
+  try {
+    var data = {};
+    try { data = JSON.parse(e.postData.contents); } catch(x) { data = e.parameter || {}; }
+    return procesar(data);
+  } catch(err) {
+    return ContentService.createTextOutput('ERR').setMimeType(ContentService.MimeType.TEXT);
+  }
+}
+
+function doGet(e) {
+  try { return procesar(e.parameter || {}); }
+  catch(err) { return ContentService.createTextOutput('ERR').setMimeType(ContentService.MimeType.TEXT); }
+}
+
+function procesar(d) {
+  var tipo = (d.tipo || '').toUpperCase();
+  if (tipo === 'RF')   guardarFalla(d);
+  else if (tipo === 'PARO') guardarParo(d);
+  else if (tipo === 'RT')   guardarRT(d);
+  return ContentService.createTextOutput('OK').setMimeType(ContentService.MimeType.TEXT);
+}
+
+// ── HOJA: Fallas (Correctivo) ──
+function guardarFalla(d) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('Fallas') || ss.insertSheet('Fallas');
+  if (sh.getLastRow() === 0) {
+    sh.appendRow(['Folio','Fecha','Línea','Máquina','Equipo','Prioridad','Síntoma',
+      'Reportó','H. Falla','H. Inicio Int.','H. Fin',
+      'Downtime (min)','MTTR (min)','MTBF (h)',
+      'Tipo Falla','Causa Raíz','Trabajo Realizado','Refacciones',
+      'Estado Final','Técnico','Observaciones','Timestamp']);
+    var h = sh.getRange(1,1,1,22);
+    h.setBackground('#08080F'); h.setFontColor('#F97316');
+    h.setFontWeight('bold'); sh.setFrozenRows(1);
+  }
+  sh.appendRow([
+    d.folio||'', d.fecha||'', d.linea||'', d.maquina||'', d.equipo||'',
+    d.prioridad||'', d.sintoma||'', d.reportante||'',
+    d.hFalla||'', d.hInicioInt||'', d.hFin||'',
+    d.downtimeMins||'', d.mttrMins||'', d.mtbfH||'',
+    d.tipoFalla||'', d.causaRaiz||'', d.trabajoRealizado||'', d.refacciones||'',
+    d.estadoFinal||'', d.tecnico||'', d.observaciones||'',
+    d.timestamp || new Date().toISOString()
+  ]);
+  var row = sh.getLastRow();
+  sh.getRange(row,1,1,22).setBackground(row%2===0?'#F0F4F8':'#FFFFFF');
+}
+
+// ── HOJA: Paros ──
+function guardarParo(d) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('Paros') || ss.insertSheet('Paros');
+  if (sh.getLastRow() === 0) {
+    sh.appendRow(['#','Clave','Fecha','Cuadrilla','Turno','Línea','Máquina',
+      'H. Inicio','H. Fin Acciones','H. Puesta Marcha',
+      'Tiempo Muerto','Minutos Muertos','Problema','Acciones','Técnico','Timestamp']);
+    var h = sh.getRange(1,1,1,16);
+    h.setBackground('#09090B'); h.setFontColor('#F59E0B');
+    h.setFontWeight('bold'); sh.setFrozenRows(1);
+  }
+  sh.appendRow([
+    d.num||'', d.clave||'', d.fecha||'', d.cuadrilla||'', d.turno||'',
+    d.linea||'', d.maquina||'',
+    d.hInicio||'', d.hFinAcciones||'', d.hPuestaMarcha||'',
+    d.tiempoMuerto||'', d.minutosMuertos||'',
+    d.problema||'', d.acciones||'', d.tecnico||'',
+    d.timestamp || new Date().toISOString()
+  ]);
+  var row = sh.getLastRow();
+  sh.getRange(row,1,1,16).setBackground(row%2===0?'#FFFBEB':'#FFFFFF');
+}
+
+// ── HOJA: Reparaciones Temporales ──
+function guardarRT(d) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('Reparaciones Temporales') || ss.insertSheet('Reparaciones Temporales');
+  if (sh.getLastRow() === 0) {
+    sh.appendRow(['#','Clave','Fecha','Línea','Máquina','Técnico','Descripción',
+      'Impide Funcionamiento','Tipo Mantenimiento','SAP Creado','Orden SAP',
+      'Observaciones','Fotos','Timestamp']);
+    var h = sh.getRange(1,1,1,14);
+    h.setBackground('#0A0A0F'); h.setFontColor('#E8642C');
+    h.setFontWeight('bold'); sh.setFrozenRows(1);
+  }
+  sh.appendRow([
+    d.num||'', d.clave||'', d.fecha||'', d.linea||'', d.maquina||'',
+    d.tecnico||'', d.descripcion||'', d.impideFuncionamiento||'',
+    d.tipoMantenimiento||'', d.ordenSAP||'', d.numeroSAP||'',
+    d.observaciones||'', d.fotos||0,
+    d.timestamp || new Date().toISOString()
+  ]);
+  var row = sh.getLastRow();
+  sh.getRange(row,1,1,14).setBackground(row%2===0?'#FFF7F3':'#FFFFFF');
+}
+
+================================================================
+PASOS DE CONFIGURACIÓN:
+1. Ve a script.google.com → Nuevo proyecto
+2. Pega TODO el código de arriba
+3. Cambia TU_SPREADSHEET_ID_AQUI por el ID de tu Google Sheet
+   (está en la URL: docs.google.com/spreadsheets/d/ESTE_ES_EL_ID/edit)
+4. Implementar → Nueva implementación → App web
+   · Ejecutar como: Yo
+   · Quién tiene acceso: Cualquier usuario
+5. Copia la URL generada
+6. Pégala en la variable SHEETS_URL al inicio del HTML
+   (reemplaza 'TU_URL_DE_APPS_SCRIPT_AQUI')
+7. El script crea automáticamente 3 hojas:
+   · Fallas         ← recibe reportes de falla (RF)
+   · Paros          ← recibe reportes de paro
+   · Reparaciones Temporales ← recibe hallazgos (RT)
+================================================================
+-->
+</body>
+</html>
