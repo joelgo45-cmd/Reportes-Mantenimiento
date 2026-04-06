@@ -766,7 +766,19 @@ html,body{min-height:100vh;overscroll-behavior:none;}
 // ║  CONFIGURA AQUÍ TU URL DE APPS SCRIPT             ║
 // ║  (una sola URL — el script detecta el tipo)       ║
 // ╚═══════════════════════════════════════════════════╝
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzLbLs20C7x4tFidTYn84nb5O8233MKBzpyTHX0EdQgi9qdY1Jbc91MCRU1khH_g-A/exec';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzDkfAQeDKBO5_OfO2EuW-pf4jmV0sU_wE5R3ujM7vwWhiEaC8-1kVJIQUjhdkEQCOA/exec';
+// ── Tijuana time helper (UTC-8, sin horario de verano) ──
+function getTJTime(){
+  const now=new Date();
+  const tj=new Date(now.toLocaleString('en-US',{timeZone:'America/Tijuana'}));
+  const pad=n=>String(n).padStart(2,'0');
+  return {
+    fecha: pad(tj.getDate())+'/'+pad(tj.getMonth()+1)+'/'+tj.getFullYear(),
+    hora:  pad(tj.getHours())+':'+pad(tj.getMinutes()),
+    iso:   now.toLocaleString('sv-SE',{timeZone:'America/Tijuana'}).replace(' ','T')+'-08:00'
+  };
+}
+
 // ═══════════════════════════════════════════════════════
 
 // ── LAUNCHER ──
@@ -937,10 +949,10 @@ function rfGuardar(){
   if(!rf_p){rfToast('Genera el reporte primero');return;}
   const db=rfLoadDB();
   if(db.find(r=>r.num===rf_p.num)){rfToast('Ya registrado');rfLimpiar();return;}
-  const now=new Date();
-  rf_p.fechaRegistro=now.toLocaleDateString('es-MX');
-  rf_p.horaRegistro=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-  rf_p.timestampRegistro=now.toISOString();
+  const _tj=getTJTime();
+  rf_p.fechaRegistro=_tj.fecha;
+  rf_p.horaRegistro=_tj.hora;
+  rf_p.timestampRegistro=_tj.iso;
   db.push(rf_p);rfSaveDB(db);rfUpdBadge();
   rfEnviarSheets(rf_p);rfExportExcelAuto(rf_p);
   rfToast('✅ Guardado · Excel descargado',3000);rf_p=null;
@@ -1089,10 +1101,10 @@ function pFallbackCopy(text,onSuccess){try{const ta=document.createElement('text
 function pRegistrarYLimpiar(){
   if(!_p_pendingRec){pToast('⚠️ Genera el reporte primero');return;}
   const db=pLoadDB();if(db.find(r=>r.num===_p_pendingRec.num)){pToast('ℹ️ Este reporte ya fue registrado');pLimpiarFormulario();return;}
-  const now=new Date();
-  _p_pendingRec.fechaRegistro=now.toLocaleDateString('es-MX');
-  _p_pendingRec.horaRegistro=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-  _p_pendingRec.timestampRegistro=now.toISOString();
+  const _tj=getTJTime();
+  _p_pendingRec.fechaRegistro=_tj.fecha;
+  _p_pendingRec.horaRegistro=_tj.hora;
+  _p_pendingRec.timestampRegistro=_tj.iso;
   db.push(_p_pendingRec);pSaveDB(db);pUpdateBadge();
   pEnviarASheets(_p_pendingRec);pExportExcel(_p_pendingRec,_p_pendingNumStr);
   pToast(`✅ Paro #${_p_pendingNumStr} registrado`,3000);_p_pendingRec=null;_p_pendingNumStr=null;
@@ -1181,8 +1193,8 @@ function rtRegistrar(){
   const num=rtNextNum(),numStr=String(num).padStart(4,'0'),fechaF=fecha.split('-').reverse().join('/');
   const impideLabel={total:'🔴 Sí, totalmente',parcial:'🟡 Parcialmente',no:'🟢 No impide'};
   const mantIcon={Correctivo:'🔧',Preventivo:'📅','Mejora/Modificación':'✏️'};
-  const nowRT=new Date();
-  const rec={num,linea,maq,tec,fecha,desc,impide,mant,sapVal,sapNum,obs,fotos:rt_fotoURLs.length,ts:nowRT.toISOString(),fechaRegistro:nowRT.toLocaleDateString('es-MX'),horaRegistro:String(nowRT.getHours()).padStart(2,'0')+':'+String(nowRT.getMinutes()).padStart(2,'0')};
+  const _tjRT=getTJTime();
+  const rec={num,linea,maq,tec,fecha,desc,impide,mant,sapVal,sapNum,obs,fotos:rt_fotoURLs.length,ts:_tjRT.iso,fechaRegistro:_tjRT.fecha,horaRegistro:_tjRT.hora};
   const db=rtLoadDB();db.push(rec);rtSaveDB(db);rtUpdateBadge();
   rtEnviarSheets(rec,numStr);
   const msg=`🔧 *REPARACIÓN TEMPORAL #${numStr}*\n━━━━━━━━━━━━━━━━━━━━━━━\n📍 *Línea:* ${linea}\n⚙️ *Máquina:* ${maq}\n📅 *Fecha detectada:* ${fechaF}\n👷 *Detectada por:* ${tec||'—'}\n\n📋 *DESCRIPCIÓN:*\n${desc}\n\n⚠️ *¿Impide funcionamiento?*\n${impideLabel[impide]}\n\n${mantIcon[mant]} *Mantenimiento:* ${mant}\n🗂️ *Orden SAP:* ${sapVal==='Sí'?'✅ Sí — '+sapNum:'❌ No creada'}${obs?'\n\n📝 *Observaciones:*\n'+obs:''}${rt_fotoURLs.length>0?'\n\n📎 *Fotos:* '+rt_fotoURLs.length+' imagen'+(rt_fotoURLs.length>1?'es':''):''}\n━━━━━━━━━━━━━━━━━━━━━━━\n_Envases Universales · RT-${numStr}_`;
@@ -1265,6 +1277,9 @@ function procesar(d) {
   else if (tipo === 'RT')   guardarRT(d);
   return ContentService.createTextOutput('OK').setMimeType(ContentService.MimeType.TEXT);
 }
+
+// Zona horaria configurada para Tijuana (America/Tijuana)
+var TZ = 'America/Tijuana';
 
 // ── HOJA: Fallas (Correctivo) ──
 function guardarFalla(d) {
